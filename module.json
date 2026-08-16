@@ -1,0 +1,44 @@
+{
+  "id": "baldurs-bones",
+  "title": "Baldur's Bones",
+  "description": "A tavern dice gambling game from the streets of Baldur's Gate. Players and NPCs wager gold in a push-your-luck game to 21. Features real-time multiplayer, dnd5e currency integration, NPC auto-play with smack-talk, and Dice So Nice support.",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "12",
+    "verified": "13"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "4.0.0"
+        }
+      }
+    ]
+  },
+  "authors": [
+    {
+      "name": "Hearthforge Creations",
+      "url": "https://github.com/Distus"
+    }
+  ],
+  "url": "https://github.com/Distus/baldurs-bones",
+  "manifest": "https://github.com/Distus/baldurs-bones/releases/latest/download/module.json",
+  "download": "https://github.com/Distus/baldurs-bones/releases/download/v1.0.0/baldurs-bones.zip",
+  "esmodules": [
+    "scripts/module.mjs"
+  ],
+  "styles": [
+    "styles/baldurs-bones.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "socket": true
+}
