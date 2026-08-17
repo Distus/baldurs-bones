@@ -357,10 +357,12 @@ export class GameManager {
    */
   #npcDecide(player) {
     const total = player.total;
-    if (total >= 18) return PLAYER_ACTION.STAND;
-    if (total >= 15) return Math.random() < 0.75 ? PLAYER_ACTION.STAND : PLAYER_ACTION.ROLL;
-    if (total >= 11) return Math.random() < 0.30 ? PLAYER_ACTION.STAND : PLAYER_ACTION.ROLL;
-    return PLAYER_ACTION.ROLL;
+    if (total <= 16) return PLAYER_ACTION.ROLL;
+    if (total >= 20) return PLAYER_ACTION.STAND;
+    if (total === 19) return Math.random() < 0.85 ? PLAYER_ACTION.STAND : PLAYER_ACTION.ROLL;
+    if (total === 18) return Math.random() < 0.70 ? PLAYER_ACTION.STAND : PLAYER_ACTION.ROLL;
+    // total === 17
+    return Math.random() < 0.50 ? PLAYER_ACTION.STAND : PLAYER_ACTION.ROLL;
   }
 
   /**

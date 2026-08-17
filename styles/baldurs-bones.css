@@ -1,64 +1,95 @@
 /* =============================================
-   Baldur's Bones – FoundryVTT Module Styles
+   Baldur's Bones – Tavern Table Theme
    ============================================= */
 
 .baldurs-bones {
+  --bb-wood: #2c1810;
+  --bb-wood-light: #3d2317;
+  --bb-wood-mid: #4a2c1a;
+  --bb-felt: #1a3a20;
+  --bb-felt-light: #224a2a;
+  --bb-felt-dark: #0f2614;
   --bb-gold: #d4a017;
-  --bb-gold-dark: #8b6914;
-  --bb-green: #2d5016;
-  --bb-green-light: #4a7c2e;
-  --bb-red: #8b1a1a;
-  --bb-red-light: #c0392b;
-  --bb-felt: #1a472a;
-  --bb-felt-light: #245233;
-  --bb-card-bg: #2a2a2a;
-  --bb-card-border: #444;
-  --bb-text: #e0e0e0;
-  --bb-text-muted: #999;
+  --bb-gold-glow: rgba(212, 160, 23, 0.35);
+  --bb-gold-dim: #8b6914;
+  --bb-ivory: #f0e6d3;
+  --bb-ivory-dim: #c4b8a0;
+  --bb-red: #9b2226;
+  --bb-red-glow: rgba(155, 34, 38, 0.3);
+  --bb-blue: #2c5d8f;
+  --bb-blue-glow: rgba(44, 93, 143, 0.3);
+  --bb-text: #e8e0d0;
+  --bb-text-dim: #9a9080;
+  --bb-shadow: rgba(0, 0, 0, 0.5);
+  --bb-die-bg: #f5eed6;
+  --bb-die-pip: #1a1a1a;
+  --bb-die-border: #b0a080;
 }
 
-/* Container */
+/* =============================================
+   Container
+   ============================================= */
+
 .bb-container {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: var(--bb-felt);
-  color: var(--bb-text);
+  gap: 0.6rem;
+  padding: 0;
   height: 100%;
   overflow-y: auto;
-  font-family: var(--font-primary, inherit);
+  background:
+    radial-gradient(ellipse at 50% 30%, var(--bb-felt-light) 0%, var(--bb-felt) 50%, var(--bb-felt-dark) 100%);
+  color: var(--bb-text);
+  font-family: var(--font-primary, "Signika", sans-serif);
 }
 
 .bb-empty {
   display: flex;
   align-items: center;
   justify-content: center;
+  font-style: italic;
+  color: var(--bb-text-dim);
 }
 
-/* Header */
+/* =============================================
+   Header
+   ============================================= */
+
 .bb-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 2px solid var(--bb-gold-dark);
-  padding-bottom: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  background: linear-gradient(180deg, var(--bb-wood) 0%, var(--bb-wood-light) 100%);
+  border-bottom: 3px solid var(--bb-gold-dim);
+  box-shadow: 0 2px 8px var(--bb-shadow);
 }
 
-.bb-header h2 {
-  margin: 0;
-  font-size: 1.3rem;
+.bb-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 700;
   color: var(--bb-gold);
-  border: none;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  letter-spacing: 0.03em;
 }
 
-.bb-pot {
-  font-size: 1.1rem;
+.bb-pot-display {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.7rem;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid var(--bb-gold-dim);
+  border-radius: 20px;
   color: var(--bb-gold);
-  background: rgba(0, 0, 0, 0.3);
-  padding: 0.25rem 0.75rem;
-  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
+
+.bb-pot-amount { font-variant-numeric: tabular-nums; }
 
 /* =============================================
    Setup Phase
@@ -67,128 +98,138 @@
 .bb-setup {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.7rem;
+  padding: 0.8rem;
 }
 
-.bb-setup-row {
+.bb-setup-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.7rem;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+}
+
+.bb-setup-field {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.bb-setup-row label {
+.bb-setup-field label {
   min-width: 100px;
-  font-weight: bold;
-  color: var(--bb-gold);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--bb-ivory-dim);
+}
+
+.bb-ante-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 #bb-ante-input {
-  width: 80px;
-  padding: 0.25rem 0.5rem;
+  width: 70px;
+  padding: 0.3rem 0.5rem;
   border-radius: 4px;
-  border: 1px solid var(--bb-card-border);
-  background: var(--bb-card-bg);
-  color: var(--bb-text);
+  border: 1px solid var(--bb-gold-dim);
+  background: var(--bb-wood);
+  color: var(--bb-gold);
   text-align: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.bb-ante-unit {
+  font-size: 0.8rem;
+  color: var(--bb-text-dim);
 }
 
 .bb-add-row {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.3rem;
   flex: 1;
 }
 
 .bb-add-row select {
   flex: 1;
-  padding: 0.25rem 0.5rem;
+  padding: 0.3rem 0.5rem;
   border-radius: 4px;
-  border: 1px solid var(--bb-card-border);
-  background: var(--bb-card-bg);
+  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--bb-wood);
   color: var(--bb-text);
+  font-size: 0.85rem;
 }
 
-/* Player list in setup */
-.bb-player-list {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 6px;
-  padding: 0.5rem;
+/* Roster */
+.bb-roster {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.bb-player-list h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.9rem;
-  color: var(--bb-gold);
-  border: none;
+.bb-roster-header {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bb-gold-dim);
+  background: rgba(0,0,0,0.15);
 }
 
-.bb-player-row {
+.bb-roster-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.3rem 0;
+  padding: 0.4rem 0.7rem;
 }
 
-.bb-player-row + .bb-player-row {
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+.bb-roster-row + .bb-roster-row {
+  border-top: 1px solid rgba(255,255,255,0.04);
 }
 
-.bb-start-btn {
-  align-self: center;
-  margin-top: 0.5rem;
-}
+.bb-roster-name { font-weight: 600; flex: 1; font-size: 0.9rem; }
 
 .bb-waiting {
   text-align: center;
   font-style: italic;
-  color: var(--bb-text-muted);
+  color: var(--bb-text-dim);
+  padding: 0.5rem;
 }
 
 /* =============================================
-   Shared elements
+   Shared Elements
    ============================================= */
 
-.bb-avatar {
-  width: 32px;
-  height: 32px;
+.bb-avatar, .bb-avatar-sm {
   border-radius: 50%;
-  border: 2px solid var(--bb-card-border);
+  border: 2px solid var(--bb-gold-dim);
   object-fit: cover;
+  box-shadow: 0 1px 3px var(--bb-shadow);
 }
+.bb-avatar { width: 32px; height: 32px; }
+.bb-avatar-sm { width: 26px; height: 26px; }
 
-.bb-player-name {
-  font-weight: bold;
-  flex: 1;
-}
-
-/* Badges */
-.bb-badge {
-  font-size: 0.7rem;
+/* Tags / badges */
+.bb-tag {
+  font-size: 0.6rem;
   text-transform: uppercase;
-  font-weight: bold;
-  padding: 0.1rem 0.4rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
   border-radius: 3px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  line-height: 1;
 }
 
-.bb-npc {
-  background: #555;
-  color: #ccc;
-}
-
-.bb-bust {
-  background: var(--bb-red);
-  color: #fcc;
-}
-
-.bb-stand {
-  background: #2c5d8f;
-  color: #b8d4f0;
-}
-
-.bb-winner {
-  background: var(--bb-gold-dark);
-  color: #fff;
-}
+.bb-tag-npc { background: rgba(255,255,255,0.1); color: var(--bb-text-dim); }
+.bb-tag-bust { background: var(--bb-red); color: #fcc; }
+.bb-tag-stand { background: var(--bb-blue); color: #b8d4f0; }
+.bb-tag-winner { background: var(--bb-gold-dim); color: #fff; }
 
 /* =============================================
    Buttons
@@ -197,85 +238,115 @@
 .bb-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  padding: 0.4rem 1rem;
-  border: 1px solid var(--bb-card-border);
-  border-radius: 5px;
-  background: var(--bb-card-bg);
+  padding: 0.4rem 0.9rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  background: var(--bb-wood-light);
   color: var(--bb-text);
   cursor: pointer;
   font-size: 0.85rem;
-  transition: background 0.15s;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px var(--bb-shadow);
 }
 
 .bb-btn:hover {
-  background: #3a3a3a;
+  background: var(--bb-wood-mid);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px var(--bb-shadow);
 }
 
-.bb-btn-sm {
-  padding: 0.25rem 0.6rem;
-  font-size: 0.8rem;
+.bb-btn-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--bb-gold-dim);
+  border-radius: 4px;
+  background: var(--bb-wood);
+  color: var(--bb-gold);
+  cursor: pointer;
+  transition: background 0.15s;
 }
+.bb-btn-add:hover { background: var(--bb-wood-mid); }
 
-.bb-btn-icon {
+.bb-btn-remove {
   background: none;
   border: none;
-  color: var(--bb-text-muted);
+  color: var(--bb-text-dim);
   cursor: pointer;
   padding: 0.2rem;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  opacity: 0.5;
+  transition: all 0.15s;
 }
+.bb-btn-remove:hover { color: var(--bb-red); opacity: 1; }
 
-.bb-btn-icon:hover {
-  color: var(--bb-red-light);
-}
-
-.bb-btn-primary {
-  background: var(--bb-green);
-  border-color: var(--bb-green-light);
+.bb-btn-start {
+  align-self: center;
+  margin-top: 0.3rem;
+  padding: 0.5rem 1.5rem;
+  background: linear-gradient(180deg, #2d6b1e 0%, #1e4a14 100%);
+  border: 1px solid #3a8a28;
   color: #fff;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
 }
-
-.bb-btn-primary:hover {
-  background: var(--bb-green-light);
+.bb-btn-start:hover {
+  background: linear-gradient(180deg, #38801e 0%, #275c18 100%);
+  border-color: #4a9a38;
 }
 
 .bb-btn-roll {
-  background: var(--bb-green);
-  border-color: var(--bb-green-light);
+  padding: 0.5rem 1.4rem;
+  background: linear-gradient(180deg, #2d6b1e 0%, #1e4a14 100%);
+  border: 1px solid #3a8a28;
   color: #fff;
   font-size: 1rem;
-  padding: 0.5rem 1.5rem;
 }
-
 .bb-btn-roll:hover {
-  background: var(--bb-green-light);
+  background: linear-gradient(180deg, #38801e 0%, #275c18 100%);
 }
 
 .bb-btn-stand {
-  background: #2c5d8f;
-  border-color: #3a7bbf;
+  padding: 0.5rem 1.4rem;
+  background: linear-gradient(180deg, #2c5d8f 0%, #1e3f66 100%);
+  border: 1px solid #3a7bbf;
   color: #fff;
   font-size: 1rem;
-  padding: 0.5rem 1.5rem;
+}
+.bb-btn-stand:hover {
+  background: linear-gradient(180deg, #3670a8 0%, #28507a 100%);
 }
 
-.bb-btn-stand:hover {
-  background: #3a7bbf;
+.bb-btn-again {
+  background: linear-gradient(180deg, #2d6b1e 0%, #1e4a14 100%);
+  border: 1px solid #3a8a28;
+  color: #fff;
+}
+
+.bb-btn-end {
+  background: var(--bb-wood);
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 /* =============================================
-   Playing Table
+   Game Table
    ============================================= */
 
 .bb-table {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.6rem;
+  padding: 0.5rem 0.8rem;
   flex: 1;
 }
 
-/* Player cards grid */
+/* Player card grid */
 .bb-players {
   display: flex;
   flex-wrap: wrap;
@@ -284,166 +355,247 @@
 }
 
 .bb-card {
-  background: var(--bb-card-bg);
-  border: 2px solid var(--bb-card-border);
-  border-radius: 8px;
+  background: rgba(0,0,0,0.25);
+  border: 2px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
   padding: 0.5rem;
-  width: 140px;
+  width: 145px;
   text-align: center;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.25s ease;
+  position: relative;
 }
 
-.bb-card-active {
+.bb-active {
   border-color: var(--bb-gold);
-  box-shadow: 0 0 10px rgba(212, 160, 23, 0.4);
+  box-shadow: 0 0 12px var(--bb-gold-glow), inset 0 0 20px rgba(212,160,23,0.05);
 }
 
-.bb-card-bust {
-  opacity: 0.5;
+.bb-bust {
+  opacity: 0.45;
   border-color: var(--bb-red);
+  box-shadow: 0 0 8px var(--bb-red-glow);
 }
 
-.bb-card-standing {
-  border-color: #2c5d8f;
+.bb-standing {
+  border-color: var(--bb-blue);
+  box-shadow: 0 0 8px var(--bb-blue-glow);
 }
 
-.bb-card-winner {
+.bb-winner {
   border-color: var(--bb-gold);
-  box-shadow: 0 0 15px rgba(212, 160, 23, 0.6);
+  box-shadow: 0 0 18px var(--bb-gold-glow), 0 0 40px rgba(212,160,23,0.15);
   opacity: 1;
 }
 
-.bb-card-header {
+.bb-card-top {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   margin-bottom: 0.4rem;
 }
 
-.bb-card-header .bb-avatar {
-  width: 28px;
-  height: 28px;
-}
-
-.bb-card-header .bb-player-name {
-  font-size: 0.8rem;
+.bb-card-name {
+  font-size: 0.78rem;
+  font-weight: 700;
   text-align: left;
+  flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--bb-ivory);
 }
 
-.bb-card-header .bb-badge {
-  font-size: 0.6rem;
+.bb-active .bb-card-name { color: var(--bb-gold); }
+
+/* Score */
+.bb-score {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--bb-ivory);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  margin-top: 0.2rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Dice display */
-.bb-dice {
+.bb-active .bb-score { color: var(--bb-gold); }
+.bb-bust .bb-score { color: #cc6666; text-decoration: line-through; }
+.bb-winner .bb-score { color: var(--bb-gold); }
+
+/* =============================================
+   CSS Dice Faces
+   ============================================= */
+
+.bb-dice-tray {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2rem;
+  gap: 3px;
   justify-content: center;
-  min-height: 2rem;
+  min-height: 30px;
   padding: 0.25rem 0;
 }
 
 .bb-die {
-  font-size: 1.5rem;
-  line-height: 1;
+  width: 28px;
+  height: 28px;
+  background: var(--bb-die-bg);
+  border: 1.5px solid var(--bb-die-border);
+  border-radius: 4px;
+  position: relative;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 1px 2px rgba(0,0,0,0.4);
 }
 
-.bb-total {
-  font-size: 0.85rem;
-  color: var(--bb-text-muted);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 0.3rem;
-  margin-top: 0.2rem;
+/* Pip layout via pseudo-elements and background */
+.bb-die .bb-pips {
+  position: absolute;
+  inset: 3px;
 }
 
-.bb-card-active .bb-total,
-.bb-card-winner .bb-total {
-  color: var(--bb-gold);
+/* We use radial-gradient dots for pips — fast, no extra DOM */
+.bb-die-1 .bb-pips {
+  background:
+    radial-gradient(circle, var(--bb-die-pip) 3.5px, transparent 3.5px);
+  background-size: 100% 100%;
+  background-position: center center;
+}
+
+.bb-die-2 .bb-pips {
+  background:
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top right,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom left;
+  background-size: 50% 50%;
+}
+
+.bb-die-3 .bb-pips {
+  background:
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top right,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat center center,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom left;
+  background-size: 50% 50%;
+}
+
+.bb-die-4 .bb-pips {
+  background:
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top left,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top right,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom left,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom right;
+  background-size: 50% 50%;
+}
+
+.bb-die-5 .bb-pips {
+  background:
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top left,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top right,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat center center,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom left,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom right;
+  background-size: 50% 50%;
+}
+
+.bb-die-6 .bb-pips {
+  background:
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top left,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top right,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat center left,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat center right,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom left,
+    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom right;
+  background-size: 50% 50%;
 }
 
 /* =============================================
-   Action area
+   Action Bar
    ============================================= */
 
-.bb-actions, .bb-resolution {
+.bb-action-bar, .bb-result-bar {
   text-align: center;
-  padding: 0.5rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 6px;
+  padding: 0.6rem;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
 }
 
-.bb-turn-label {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
+.bb-turn-prompt {
+  font-size: 0.9rem;
+  font-weight: 700;
   color: var(--bb-gold);
-  font-weight: bold;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
 .bb-action-buttons {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.6rem;
   justify-content: center;
 }
 
-.bb-result-text {
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: var(--bb-gold);
-  margin: 0 0 0.5rem 0;
-}
-
-/* NPC thinking animation */
+/* NPC thinking */
 .bb-npc-thinking {
   font-style: italic;
+  color: var(--bb-ivory-dim);
 }
 
-.bb-thinking-icon {
+.bb-spin {
   display: inline-block;
   animation: bb-wobble 0.8s ease-in-out infinite;
 }
 
 @keyframes bb-wobble {
   0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(15deg); }
-  75% { transform: rotate(-15deg); }
+  25% { transform: rotate(18deg); }
+  75% { transform: rotate(-18deg); }
 }
 
+/* Resolution */
+.bb-result-msg {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--bb-gold);
+  margin-bottom: 0.6rem;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+.bb-result-msg i { margin-right: 0.3rem; }
+
 /* =============================================
-   Round log
+   Round Log
    ============================================= */
 
 .bb-log {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.04);
   border-radius: 6px;
-  padding: 0.5rem;
-  max-height: 120px;
+  padding: 0.4rem 0.6rem;
+  max-height: 110px;
   overflow-y: auto;
-  font-size: 0.78rem;
-  color: var(--bb-text-muted);
+  font-size: 0.75rem;
+  color: var(--bb-text-dim);
+  line-height: 1.35;
 }
 
-.bb-log-entry {
-  margin: 0;
-  padding: 0.15rem 0;
-  line-height: 1.3;
+.bb-log-line {
+  padding: 0.12rem 0;
 }
 
-.bb-log-entry + .bb-log-entry {
-  border-top: 1px solid rgba(255, 255, 255, 0.03);
+.bb-log-line + .bb-log-line {
+  border-top: 1px solid rgba(255,255,255,0.03);
 }
+
+/* Scrollbar styling */
+.bb-log::-webkit-scrollbar { width: 4px; }
+.bb-log::-webkit-scrollbar-track { background: transparent; }
+.bb-log::-webkit-scrollbar-thumb { background: var(--bb-gold-dim); border-radius: 2px; }
 
 /* =============================================
-   Chat message
+   Chat message styling
    ============================================= */
 
 .baldurs-bones-chat {
-  padding: 0.5rem;
-  background: linear-gradient(135deg, #1a472a, #245233);
+  padding: 0.5rem 0.6rem;
+  background: linear-gradient(135deg, var(--color-cool-5, #1a3a20) 0%, var(--color-cool-4, #224a2a) 100%);
   border-radius: 6px;
-  color: #e0e0e0;
-  border: 1px solid #d4a017;
+  color: #e8e0d0;
+  border-left: 3px solid #d4a017;
+  font-size: 0.9rem;
 }

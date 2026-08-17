@@ -63,7 +63,7 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
         isBust: p.status === STATUS.BUST,
         isStanding: p.status === STATUS.STANDING,
         isWinner: state.winnerId === p.actorId,
-        diceFaces: p.dice.map(d => this.#dieUnicode(d))
+        diceValues: p.dice
       })),
       ante: state.ante,
       pot: state.pot,
@@ -77,10 +77,7 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
     };
   }
 
-  #dieUnicode(val) {
-    const faces = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-    return faces[val] ?? '?';
-  }
+
 
   /* --------------------------------------------------
    * Event listeners
