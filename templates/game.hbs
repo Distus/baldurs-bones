@@ -105,6 +105,11 @@
       {{#if canAct}}
       <div class="bb-turn-prompt">{{currentPlayerName}}'s turn</div>
       <div class="bb-action-buttons">
+        <div class="bb-dice-stepper">
+          <button data-action="dice-down" class="bb-stepper-btn" title="Fewer dice"><i class="fas fa-minus"></i></button>
+          <input type="number" id="bb-dice-count" value="1" min="1" max="3" readonly />
+          <button data-action="dice-up" class="bb-stepper-btn" title="More dice"><i class="fas fa-plus"></i></button>
+        </div>
         <button data-action="roll" data-actor-id="{{currentActorId}}" class="bb-btn bb-btn-roll">
           <i class="fas fa-dice"></i> Roll
         </button>

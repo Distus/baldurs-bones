@@ -8,7 +8,6 @@ import { GameManager } from './game-manager.mjs';
 Hooks.once('init', () => {
   console.log(`${MODULE_ID} | Initializing Baldur's Bones`);
 
-  // Guard the eq helper — only register if not already present
   if (!Handlebars.helpers['bbeq']) {
     Handlebars.registerHelper('bbeq', (a, b) => a === b);
   }
@@ -21,9 +20,7 @@ Hooks.once('ready', () => {
 });
 
 /* --------------------------------------------------
- * Scene controls – add a dice button to the token tools
- * Handles both v14 (object keyed by group name, plural "tokens")
- * and v13 (array of objects with .name, singular "token")
+ * Scene controls – v14 (object, "tokens") and v13 (array, "token")
  * -------------------------------------------------- */
 
 Hooks.on('getSceneControlButtons', (controls) => {
@@ -31,10 +28,8 @@ Hooks.on('getSceneControlButtons', (controls) => {
 
   let tokenControls;
   if (Array.isArray(controls)) {
-    // v13 and earlier: array of { name, tools: [...] }
     tokenControls = controls.find(c => c.name === 'token');
   } else {
-    // v14+: object keyed by group name, "tokens" (plural)
     tokenControls = controls.tokens;
   }
   if (!tokenControls) return;
@@ -54,7 +49,6 @@ Hooks.on('getSceneControlButtons', (controls) => {
     }
   };
 
-  // v14: tools is an object; v13: tools is an array
   if (Array.isArray(tokenControls.tools)) {
     tokenControls.tools.push(tool);
   } else {
@@ -63,7 +57,7 @@ Hooks.on('getSceneControlButtons', (controls) => {
 });
 
 /* --------------------------------------------------
- * Chat command: !bb (bang-command avoids v14 slash-command validation)
+ * Chat command: !bb
  * -------------------------------------------------- */
 
 Hooks.on('chatMessage', (chatLog, message, chatData) => {

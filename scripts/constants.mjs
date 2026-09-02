@@ -2,6 +2,7 @@ export const MODULE_ID = 'baldurs-bones';
 export const SOCKET_NAME = `module.${MODULE_ID}`;
 export const BUST_THRESHOLD = 21;
 export const STARTING_DICE = 3;
+export const MAX_ROLL_DICE = 3;
 
 export const PHASE = {
   SETUP: 'setup',
@@ -27,10 +28,6 @@ export const PLAYER_ACTION = {
   ROLL: 'roll',
   STAND: 'stand'
 };
-
-/* --------------------------------------------------
- * NPC Smack-Talk
- * -------------------------------------------------- */
 
 export const NPC_TALK = {
   ROLL: [

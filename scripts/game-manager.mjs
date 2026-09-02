@@ -17,8 +17,11 @@ export class GameManager {
   /** @type {BaldursBonesApp|null} */
   #app = null;
 
-  /** @type {boolean} - prevents overlapping NPC auto-play calls */
+  /** @type {boolean} */
   #npcActing = false;
+
+  /** @type {number|null} */
+  #npcTimeout = null;
 
   constructor() {
     if (GameManager.#instance) return GameManager.#instance;
@@ -46,20 +49,18 @@ export class GameManager {
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  /** Whether Dice So Nice is installed and active. */
   get #hasDSN() {
     return !!(game.modules.get('dice-so-nice')?.active && game.dice3d);
   }
 
-  /**
-   * Roll dice and optionally show via Dice So Nice.
-   * @param {string} formula  e.g. "3d6" or "1d6"
-   * @returns {Promise<Roll>}
-   */
   async #roll(formula) {
     const roll = await new Roll(formula).evaluate();
     if (this.#hasDSN) {
-      await game.dice3d.showForRoll(roll, game.user, true);
+      try {
+        await game.dice3d.showForRoll(roll, game.user, true);
+      } catch (e) {
+        console.warn(`${MODULE_ID} | Dice So Nice error:`, e);
+      }
     }
     return roll;
   }
@@ -79,7 +80,9 @@ export class GameManager {
         this.#renderApp();
         break;
       case SOCKET_ACTION.PLAYER_ACTION:
-        if (game.user.isGM) this.#processPlayerAction(data.actorId, data.playerAction);
+        if (game.user.isGM) {
+          this.#processPlayerAction(data.actorId, data.playerAction, data.diceCount ?? 1);
+        }
         break;
       case SOCKET_ACTION.OPEN_APP:
         this.#state = data.state;
@@ -100,7 +103,6 @@ export class GameManager {
    * Game lifecycle
    * -------------------------------------------------- */
 
-  /** GM creates a new game in setup phase. */
   createGame() {
     this.#state = {
       id: foundry.utils.randomID(),
@@ -115,7 +117,6 @@ export class GameManager {
     this.openApp();
   }
 
-  /** Add an actor to the game during setup. */
   addPlayer(actorId) {
     if (!game.user.isGM || this.#state?.phase !== PHASE.SETUP) return;
     if (this.#state.players.find(p => p.actorId === actorId)) {
@@ -125,11 +126,6 @@ export class GameManager {
     const actor = game.actors.get(actorId);
     if (!actor) return;
 
-    // Determine who controls this actor
-    const ownerEntry = Object.entries(actor.ownership)
-      .find(([uid, level]) => uid !== 'default' && level === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER);
-    const ownerId = ownerEntry ? ownerEntry[0] : game.user.id;
-
     this.#state.players.push({
       actorId,
       name: actor.name,
@@ -137,14 +133,12 @@ export class GameManager {
       isNPC: !actor.hasPlayerOwner,
       dice: [],
       total: 0,
-      status: STATUS.ACTIVE,
-      ownerId
+      status: STATUS.ACTIVE
     });
     this.#broadcastState();
     this.#renderApp();
   }
 
-  /** Remove a player during setup. */
   removePlayer(actorId) {
     if (!game.user.isGM || this.#state?.phase !== PHASE.SETUP) return;
     this.#state.players = this.#state.players.filter(p => p.actorId !== actorId);
@@ -152,7 +146,6 @@ export class GameManager {
     this.#renderApp();
   }
 
-  /** Update the ante amount during setup. */
   setAnte(amount) {
     if (!game.user.isGM || this.#state?.phase !== PHASE.SETUP) return;
     this.#state.ante = Math.max(0, Math.floor(amount));
@@ -160,7 +153,6 @@ export class GameManager {
     this.#renderApp();
   }
 
-  /** Start the game: collect antes, roll starting dice, begin play. */
   async startGame() {
     if (!game.user.isGM || this.#state?.phase !== PHASE.SETUP) return;
     if (this.#state.players.length < 2) {
@@ -168,7 +160,6 @@ export class GameManager {
       return;
     }
 
-    // Validate all players can afford the ante
     for (const p of this.#state.players) {
       const actor = game.actors.get(p.actorId);
       if (!actor) continue;
@@ -179,7 +170,6 @@ export class GameManager {
       }
     }
 
-    // Deduct ante from each player
     for (const p of this.#state.players) {
       const actor = game.actors.get(p.actorId);
       if (!actor) continue;
@@ -191,7 +181,6 @@ export class GameManager {
     this.#state.pot = this.#state.ante * this.#state.players.length;
     this.#state.roundLog = [`Ante collected: ${this.#state.pot} gp in the pot.`];
 
-    // Roll starting dice for each player
     for (const p of this.#state.players) {
       const roll = await this.#roll(`${STARTING_DICE}d6`);
       p.dice = roll.terms[0].results.map(r => r.result);
@@ -207,7 +196,6 @@ export class GameManager {
     this.#state.phase = PHASE.PLAYING;
     this.#state.currentPlayerIndex = this.#findNextActivePlayer(-1);
 
-    // If everyone busted on opening roll, resolve immediately
     if (this.#state.currentPlayerIndex === -1) {
       await this.#resolveGame();
       this.#broadcast(SOCKET_ACTION.OPEN_APP, { state: this.#state });
@@ -215,46 +203,53 @@ export class GameManager {
       return;
     }
 
-    // Broadcast and open on all clients
     this.#broadcast(SOCKET_ACTION.OPEN_APP, { state: this.#state });
     this.#renderApp();
-
-    // Kick off NPC auto-play if the first player is an NPC
     this.#checkNPCAutoPlay();
   }
 
   /* --------------------------------------------------
-   * Player actions (roll / stand)
+   * Player actions
    * -------------------------------------------------- */
 
-  /** Called by the controlling client. */
-  submitAction(actorId, action) {
+  submitAction(actorId, action, diceCount = 1) {
     if (game.user.isGM) {
-      this.#processPlayerAction(actorId, action);
+      this.#processPlayerAction(actorId, action, diceCount);
     } else {
-      this.#broadcast(SOCKET_ACTION.PLAYER_ACTION, { actorId, playerAction: action });
+      this.#broadcast(SOCKET_ACTION.PLAYER_ACTION, {
+        actorId,
+        playerAction: action,
+        diceCount
+      });
     }
   }
 
-  async #processPlayerAction(actorId, action) {
+  async #processPlayerAction(actorId, action, diceCount = 1) {
     if (!game.user.isGM || this.#state?.phase !== PHASE.PLAYING) return;
 
     const player = this.#state.players[this.#state.currentPlayerIndex];
     if (!player || player.actorId !== actorId) return;
 
     if (action === PLAYER_ACTION.ROLL) {
-      const roll = await this.#roll('1d6');
-      const result = roll.terms[0].results[0].result;
-      player.dice.push(result);
-      player.total += result;
+      diceCount = Math.max(1, Math.min(3, Math.floor(diceCount)));
+      const formula = `${diceCount}d6`;
+      const roll = await this.#roll(formula);
+      const results = roll.terms[0].results.map(r => r.result);
+      player.dice.push(...results);
+      player.total += roll.total;
+
+      const diceStr = results.join(', ');
 
       if (player.total > BUST_THRESHOLD) {
         player.status = STATUS.BUST;
-        this.#state.roundLog.push(`${player.name} rolled a ${result} → ${player.total} — BUST!`);
+        this.#state.roundLog.push(
+          `${player.name} rolled ${diceStr} (${formula}) → ${player.total} — BUST!`
+        );
         this.#advanceTurn();
       } else {
-        this.#state.roundLog.push(`${player.name} rolled a ${result} → ${player.total}`);
-        // Player can keep rolling — don't advance turn
+        this.#state.roundLog.push(
+          `${player.name} rolled ${diceStr} (${formula}) → ${player.total}`
+        );
       }
     } else if (action === PLAYER_ACTION.STAND) {
       player.status = STATUS.STANDING;
@@ -288,7 +283,6 @@ export class GameManager {
    * NPC Auto-Play
    * -------------------------------------------------- */
 
-  /** Check if the current player is an NPC; if so, start their auto-play. */
   #checkNPCAutoPlay() {
     if (!game.user.isGM || this.#state?.phase !== PHASE.PLAYING) return;
     if (this.#npcActing) return;
@@ -297,79 +291,118 @@ export class GameManager {
     if (!current || !current.isNPC || current.status !== STATUS.ACTIVE) return;
 
     this.#npcActing = true;
-    this.#runNPCTurn(current).finally(() => {
+    this.#clearNPCTimeout();
+
+    // Safety: force-stand after 30s to prevent limbo
+    this.#npcTimeout = setTimeout(() => {
+      console.warn(`${MODULE_ID} | NPC turn timeout — forcing stand.`);
       this.#npcActing = false;
-    });
+      if (this.#state?.phase === PHASE.PLAYING) {
+        const cur = this.getCurrentPlayer();
+        if (cur?.isNPC && cur.status === STATUS.ACTIVE) {
+          cur.status = STATUS.STANDING;
+          this.#state.roundLog.push(`${cur.name} takes too long and stands at ${cur.total}.`);
+          this.#advanceTurn();
+          this.#broadcastState();
+          this.#renderApp();
+          this.#checkNPCAutoPlay();
+        }
+      }
+    }, 30000);
+
+    this.#runNPCTurn(current)
+      .catch(err => console.error(`${MODULE_ID} | NPC auto-play error:`, err))
+      .finally(() => {
+        this.#npcActing = false;
+        this.#clearNPCTimeout();
+      });
   }
 
-  /**
-   * Run a full NPC turn: decide, talk, act, repeat if still active.
-   * @param {object} player
-   */
+  #clearNPCTimeout() {
+    if (this.#npcTimeout) {
+      clearTimeout(this.#npcTimeout);
+      this.#npcTimeout = null;
+    }
+  }
+
   async #runNPCTurn(player) {
     while (player.status === STATUS.ACTIVE && this.#state?.phase === PHASE.PLAYING) {
-      // Make sure it's still this NPC's turn
       const current = this.getCurrentPlayer();
       if (!current || current.actorId !== player.actorId) break;
 
-      // Dramatic pause — 1.0–1.8 seconds
       await this.#delay(1000 + Math.random() * 800);
 
-      // Decide
+      // Guard after delay
+      if (!this.#state || this.#state.phase !== PHASE.PLAYING) break;
+      if (player.status !== STATUS.ACTIVE) break;
+
       const action = this.#npcDecide(player);
 
-      // Smack-talk BEFORE acting
       if (action === PLAYER_ACTION.ROLL) {
         this.#postNPCChat(player, this.#pick(NPC_TALK.ROLL));
       } else {
         this.#postNPCChat(player, this.#pick(NPC_TALK.STAND));
       }
 
-      // Small beat after the talk
       await this.#delay(600);
+      if (!this.#state || this.#state.phase !== PHASE.PLAYING) break;
 
-      // Execute the action
-      await this.#processPlayerAction(player.actorId, action);
+      await this.#processPlayerAction(player.actorId, action, 1);
 
-      // If they busted, post a reaction
       if (player.status === STATUS.BUST) {
         await this.#delay(500);
         this.#postNPCChat(player, this.#pick(NPC_TALK.BUST));
       }
 
-      // If they stood or busted, the turn advanced — exit loop
       if (action === PLAYER_ACTION.STAND || player.status === STATUS.BUST) break;
     }
 
-    // After this NPC's turn ends, check if the NEXT player is also an NPC
+    // Check if the next player is also an NPC
     if (this.#state?.phase === PHASE.PLAYING) {
-      // Small pause before next player
       await this.#delay(400);
       this.#npcActing = false;
+      this.#clearNPCTimeout();
       this.#checkNPCAutoPlay();
     }
   }
 
   /**
-   * Simple NPC decision logic with some variance.
-   * @param {object} player
-   * @returns {string} PLAYER_ACTION.ROLL or PLAYER_ACTION.STAND
+   * INT-based NPC decision logic.
+   *
+   * High INT → accurate risk perception → stands at smart thresholds.
+   * Low INT  → underestimates bust risk → pushes luck more often.
+   *
+   * Never stands at 16 or below.
    */
   #npcDecide(player) {
     const total = player.total;
     if (total <= 16) return PLAYER_ACTION.ROLL;
-    if (total >= 20) return PLAYER_ACTION.STAND;
-    if (total === 19) return Math.random() < 0.85 ? PLAYER_ACTION.STAND : PLAYER_ACTION.ROLL;
-    if (total === 18) return Math.random() < 0.70 ? PLAYER_ACTION.STAND : PLAYER_ACTION.ROLL;
-    // total === 17
-    return Math.random() < 0.50 ? PLAYER_ACTION.STAND : PLAYER_ACTION.ROLL;
+
+    const actor = game.actors.get(player.actorId);
+    const intScore = actor?.system?.abilities?.int?.value ?? 10;
+
+    // Smart factor: 0.0 (INT 1) → 1.0 (INT 20)
+    const smart = Math.max(0, Math.min(1, (intScore - 1) / 19));
+
+    // Actual bust probability at this total:
+    //   17 → 2/6 = 33%    18 → 3/6 = 50%
+    //   19 → 4/6 = 67%    20 → 5/6 = 83%
+    const bustChance = Math.max(0, Math.min(1, (total - 15) / 6));
+
+    // Smart NPCs perceive risk accurately (1.0×).
+    // Dumb NPCs underestimate it (down to 0.4×).
+    const riskPerception = 0.4 + (smart * 0.6);
+    let standChance = bustChance * riskPerception;
+
+    // Add noise inversely proportional to INT
+    const noise = (1 - smart) * 0.2;
+    standChance += (Math.random() - 0.5) * 2 * noise;
+
+    standChance = Math.max(0.05, Math.min(0.95, standChance));
+
+    return Math.random() < standChance ? PLAYER_ACTION.STAND : PLAYER_ACTION.ROLL;
   }
 
-  /**
-   * Post an in-character chat message from an NPC.
-   * @param {object} player
-   * @param {string} text
-   */
   #postNPCChat(player, text) {
     const actor = game.actors.get(player.actorId);
     const speaker = actor
@@ -387,7 +420,6 @@ export class GameManager {
 
   async #resolveGame() {
     this.#state.phase = PHASE.RESOLUTION;
-
     const eligible = this.#state.players.filter(p => p.status !== STATUS.BUST);
 
     if (eligible.length === 0) {
@@ -406,44 +438,27 @@ export class GameManager {
       this.#state.winnerId = winner.actorId;
       const actor = game.actors.get(winner.actorId);
       if (actor) {
-        await actor.update({
-          'system.currency.gp': actor.system.currency.gp + this.#state.pot
-        });
+        await actor.update({ 'system.currency.gp': actor.system.currency.gp + this.#state.pot });
       }
-      this.#state.roundLog.push(
-        `${winner.name} wins ${this.#state.pot} gp with a score of ${winner.total}!`
-      );
-      this.#postChatResult(
-        `${winner.name} wins ${this.#state.pot} gp at Baldur's Bones with a score of ${winner.total}!`
-      );
-
-      // NPC winner gloats
+      this.#state.roundLog.push(`${winner.name} wins ${this.#state.pot} gp with a score of ${winner.total}!`);
+      this.#postChatResult(`${winner.name} wins ${this.#state.pot} gp at Baldur's Bones with a score of ${winner.total}!`);
       if (winner.isNPC) {
         setTimeout(() => this.#postNPCChat(winner, this.#pick(NPC_TALK.WIN)), 800);
       }
     } else {
-      // Tie — split pot
       const share = Math.floor(this.#state.pot / winners.length);
       const remainder = this.#state.pot - (share * winners.length);
       for (const w of winners) {
         const actor = game.actors.get(w.actorId);
         if (actor) {
-          await actor.update({
-            'system.currency.gp': actor.system.currency.gp + share
-          });
+          await actor.update({ 'system.currency.gp': actor.system.currency.gp + share });
         }
       }
       const names = winners.map(w => w.name).join(' and ');
       this.#state.winnerId = 'tie';
-      this.#state.roundLog.push(
-        `Tie! ${names} split the pot of ${this.#state.pot} gp (${share} gp each).`
-      );
-      if (remainder > 0) {
-        this.#state.roundLog.push(`${remainder} gp remainder goes to the house.`);
-      }
-      this.#postChatResult(
-        `${names} tie at ${highScore} and split the ${this.#state.pot} gp pot at Baldur's Bones!`
-      );
+      this.#state.roundLog.push(`Tie! ${names} split the pot of ${this.#state.pot} gp (${share} gp each).`);
+      if (remainder > 0) this.#state.roundLog.push(`${remainder} gp remainder goes to the house.`);
+      this.#postChatResult(`${names} tie at ${highScore} and split the ${this.#state.pot} gp pot at Baldur's Bones!`);
     }
   }
 
@@ -460,6 +475,8 @@ export class GameManager {
 
   playAgain() {
     if (!game.user.isGM) return;
+    this.#clearNPCTimeout();
+    this.#npcActing = false;
     for (const p of this.#state.players) {
       p.dice = [];
       p.total = 0;
@@ -476,6 +493,8 @@ export class GameManager {
 
   endGame() {
     if (!game.user.isGM) return;
+    this.#clearNPCTimeout();
+    this.#npcActing = false;
     this.#state = null;
     this.#broadcast(SOCKET_ACTION.CLOSE_APP, {});
     if (this.#app?.rendered) this.#app.close();
@@ -485,14 +504,18 @@ export class GameManager {
    * Public helpers
    * -------------------------------------------------- */
 
+  /**
+   * Uses Foundry's native actor.isOwner for reliable permission checking
+   * across all Foundry versions. Returns true for the owning player
+   * and for the GM.
+   */
   canCurrentUserAct() {
     if (!this.#state || this.#state.phase !== PHASE.PLAYING) return false;
     const current = this.#state.players[this.#state.currentPlayerIndex];
-    if (!current) return false;
-    // NPCs are auto-played, so no human gets action buttons for them
-    if (current.isNPC) return false;
-    if (game.user.isGM && !current.isNPC) return true;
-    return current.ownerId === game.user.id;
+    if (!current || current.isNPC) return false;
+    const actor = game.actors.get(current.actorId);
+    if (!actor) return false;
+    return actor.isOwner;
   }
 
   getCurrentPlayer() {
@@ -506,8 +529,6 @@ export class GameManager {
         this.#app = new BaldursBonesApp();
         this.#app.render(true);
       });
-    } else if (!this.#app.rendered) {
-      this.#app.render(true);
     } else {
       this.#app.render(true);
     }

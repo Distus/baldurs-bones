@@ -25,10 +25,6 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
   };
 
-  /* --------------------------------------------------
-   * Context
-   * -------------------------------------------------- */
-
   async _prepareContext(options) {
     const gm = GameManager.instance;
     const state = gm.state;
@@ -38,7 +34,6 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const currentPlayer = gm.getCurrentPlayer();
     const canAct = gm.canCurrentUserAct();
 
-    // Build actor list for the add-player dropdown (GM only, setup)
     let availableActors = [];
     if (isGM && state.phase === PHASE.SETUP) {
       const existing = new Set(state.players.map(p => p.actorId));
@@ -77,12 +72,6 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
     };
   }
 
-
-
-  /* --------------------------------------------------
-   * Event listeners
-   * -------------------------------------------------- */
-
   _onRender(context, options) {
     const html = this.element;
 
@@ -109,14 +98,28 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
       GameManager.instance.startGame();
     });
 
-    // Playing: roll / stand
+    // Playing: roll (reads dice count from stepper)
     html.querySelector('[data-action="roll"]')?.addEventListener('click', () => {
       const actorId = html.querySelector('[data-action="roll"]').dataset.actorId;
-      GameManager.instance.submitAction(actorId, PLAYER_ACTION.ROLL);
+      const countInput = html.querySelector('#bb-dice-count');
+      const diceCount = countInput ? parseInt(countInput.value) || 1 : 1;
+      GameManager.instance.submitAction(actorId, PLAYER_ACTION.ROLL, diceCount);
     });
+
+    // Playing: stand
     html.querySelector('[data-action="stand"]')?.addEventListener('click', () => {
       const actorId = html.querySelector('[data-action="stand"]').dataset.actorId;
       GameManager.instance.submitAction(actorId, PLAYER_ACTION.STAND);
+    });
+
+    // Dice count stepper buttons
+    html.querySelector('[data-action="dice-down"]')?.addEventListener('click', () => {
+      const input = html.querySelector('#bb-dice-count');
+      if (input) input.value = Math.max(1, parseInt(input.value) - 1);
+    });
+    html.querySelector('[data-action="dice-up"]')?.addEventListener('click', () => {
+      const input = html.querySelector('#bb-dice-count');
+      if (input) input.value = Math.min(3, parseInt(input.value) + 1);
     });
 
     // Resolution: play again / end
@@ -127,14 +130,10 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
       GameManager.instance.endGame();
     });
 
-    // Auto-scroll the log
+    // Auto-scroll log
     const log = html.querySelector('.bb-log');
     if (log) log.scrollTop = log.scrollHeight;
   }
-
-  /* --------------------------------------------------
-   * Lifecycle
-   * -------------------------------------------------- */
 
   close(options = {}) {
     GameManager.instance.app = null;
