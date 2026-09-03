@@ -444,17 +444,49 @@ export class GameManager {
 
   #npcDecide(player) {
     const total = player.total;
+
+    // Rule: always roll at 16 or below
     if (total <= 16) return PLAYER_ACTION.ROLL;
+
+    // Rule: always stand at 20 or 21
+    if (total >= 20) return PLAYER_ACTION.STAND;
+
+    // Rule: never stand below the highest standing score — it's an auto-loss
+    const bestStanding = this.#getHighestStandingTotal();
+    if (bestStanding > 0 && total < bestStanding) return PLAYER_ACTION.ROLL;
+
+    // INT-based decision for 17–19
     const actor = game.actors.get(player.actorId);
     const intScore = actor?.system?.abilities?.int?.value ?? 10;
+    // Smart factor: 0.0 (INT 1) → 1.0 (INT 20)
     const smart = Math.max(0, Math.min(1, (intScore - 1) / 19));
+
+    // Bust probability: 17→33%, 18→50%, 19→67%
     const bustChance = Math.max(0, Math.min(1, (total - 15) / 6));
-    const riskPerception = 0.4 + (smart * 0.6);
-    let standChance = bustChance * riskPerception;
-    const noise = (1 - smart) * 0.2;
+
+    // Stand chance scales with bust risk, amplified by intelligence.
+    // Smart NPCs overweight bust risk (stand more). Dumb NPCs underweight it.
+    // At smart=1.0: standChance ≈ bustChance^0.3 (very responsive)
+    // At smart=0.0: standChance ≈ bustChance^1.0 (tracks raw probability)
+    const exponent = 1.0 - (smart * 0.7);
+    let standChance = Math.pow(bustChance, exponent);
+
+    // Noise inversely proportional to INT
+    const noise = (1 - smart) * 0.15;
     standChance += (Math.random() - 0.5) * 2 * noise;
     standChance = Math.max(0.05, Math.min(0.95, standChance));
+
     return Math.random() < standChance ? PLAYER_ACTION.STAND : PLAYER_ACTION.ROLL;
+  }
+
+  /** Returns the highest total among players who have already stood, or 0. */
+  #getHighestStandingTotal() {
+    if (!this.#state) return 0;
+    let best = 0;
+    for (const p of this.#state.players) {
+      if (p.status === STATUS.STANDING && p.total > best) best = p.total;
+    }
+    return best;
   }
 
   #postNPCChat(player, text) {
@@ -467,7 +499,14 @@ export class GameManager {
   async #resolveGame() {
     this.#cancelNPC();
     this.#state.phase = PHASE.RESOLUTION;
-    const eligible = this.#state.players.filter(p => p.status !== STATUS.BUST);
+
+    // Include anyone who hasn't busted (STANDING or still ACTIVE)
+    const eligible = this.#state.players.filter(
+      p => p.status === STATUS.STANDING || p.status === STATUS.ACTIVE
+    );
+
+    console.log(`${MODULE_ID} | Resolution: ${eligible.length} eligible of ${this.#state.players.length} total`,
+      this.#state.players.map(p => `${p.name}: ${p.status} (${p.total})`));
 
     if (eligible.length === 0) {
       this.#state.roundLog.push('Everyone busted! The pot is lost to the house.');
@@ -491,6 +530,7 @@ export class GameManager {
         setTimeout(() => this.#postNPCChat(winner, this.#pick(NPC_TALK.WIN)), 800);
       }
     } else {
+      // Tie — split pot evenly
       const share = Math.floor(this.#state.pot / winners.length);
       const remainder = this.#state.pot - (share * winners.length);
       for (const w of winners) {
@@ -499,9 +539,9 @@ export class GameManager {
       }
       const names = winners.map(w => w.name).join(' and ');
       this.#state.winnerId = 'tie';
-      this.#state.roundLog.push(`Tie! ${names} split the pot (${share} gp each).`);
+      this.#state.roundLog.push(`Push! ${names} tied at ${highScore} and split the pot (${share} gp each).`);
       if (remainder > 0) this.#state.roundLog.push(`${remainder} gp remainder to the house.`);
-      this.#postChatResult(`${names} tie at ${highScore} and split the ${this.#state.pot} gp pot!`);
+      this.#postChatResult(`Push! ${names} tie at ${highScore} and split the ${this.#state.pot} gp pot!`);
     }
   }
 
