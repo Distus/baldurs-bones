@@ -30,12 +30,22 @@ export class GameManager {
     const roll = await new Roll(formula).evaluate();
     if (this.#hasDSN) {
       try {
-        // Await fully so DSN clears previous dice before showing new ones
+        // Clear any lingering dice from previous rolls
+        this.#clearDSN();
         await game.dice3d.showForRoll(roll, game.user, true);
       }
       catch (e) { console.warn(`${MODULE_ID} | DSN error:`, e); }
     }
     return roll;
+  }
+
+  /** Dismiss any lingering Dice So Nice 3D dice from the canvas. */
+  #clearDSN() {
+    try {
+      if (typeof game.dice3d.dismiss === 'function') game.dice3d.dismiss();
+      else if (game.dice3d.box?.clearAll) game.dice3d.box.clearAll();
+      else if (game.dice3d._3dCanvas?.clearAll) game.dice3d._3dCanvas.clearAll();
+    } catch (e) { /* silent — method may not exist in this DSN version */ }
   }
 
   /* ── Sockets ───────────────────────────────── */
