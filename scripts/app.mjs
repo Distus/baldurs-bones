@@ -74,6 +74,19 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
     html.querySelector('[data-action="start-game"]')?.addEventListener('click', () =>
       GameManager.instance.startGame());
 
+    // Actor search filter
+    const searchInput = html.querySelector('#bb-actor-search');
+    const selectEl = html.querySelector('#bb-actor-select');
+    if (searchInput && selectEl) {
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase();
+        for (const opt of selectEl.options) {
+          if (!opt.value) continue; // skip placeholder
+          opt.hidden = q.length > 0 && !opt.textContent.toLowerCase().includes(q);
+        }
+      });
+    }
+
     // Initial roll
     html.querySelector('[data-action="initial-roll"]')?.addEventListener('click', () => {
       const actorId = html.querySelector('[data-action="initial-roll"]').dataset.actorId;
@@ -117,6 +130,10 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
       GameManager.instance.playAgain());
     html.querySelector('[data-action="end-game"]')?.addEventListener('click', () =>
       GameManager.instance.endGame());
+
+    // Forfeit (GM cancels mid-round)
+    html.querySelector('[data-action="forfeit"]')?.addEventListener('click', () =>
+      GameManager.instance.forfeitGame());
 
     const log = html.querySelector('.bb-log');
     if (log) log.scrollTop = log.scrollHeight;

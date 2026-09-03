@@ -500,17 +500,24 @@ export class GameManager {
     this.#cancelNPC();
     this.#state.phase = PHASE.RESOLUTION;
 
-    // Include anyone who hasn't busted (STANDING or still ACTIVE)
-    const eligible = this.#state.players.filter(
-      p => p.status === STATUS.STANDING || p.status === STATUS.ACTIVE
-    );
+    // Safety net: fix any player at ≤21 who is incorrectly marked BUST
+    for (const p of this.#state.players) {
+      if (p.total <= BUST_THRESHOLD && p.status === STATUS.BUST) {
+        console.warn(`${MODULE_ID} | BUG: ${p.name} marked BUST at ${p.total} — fixing to STANDING.`);
+        p.status = STATUS.STANDING;
+      }
+    }
 
-    console.log(`${MODULE_ID} | Resolution: ${eligible.length} eligible of ${this.#state.players.length} total`,
-      this.#state.players.map(p => `${p.name}: ${p.status} (${p.total})`));
+    const eligible = this.#state.players.filter(p => p.status !== STATUS.BUST);
+
+    console.log(`${MODULE_ID} | Resolution:`,
+      JSON.stringify(this.#state.players.map(p => ({
+        name: p.name, total: p.total, status: p.status
+      }))));
 
     if (eligible.length === 0) {
-      this.#state.roundLog.push('Everyone busted! The pot is lost to the house.');
       this.#state.winnerId = null;
+      this.#state.roundLog.push('Everyone busted! The pot is lost to the house.');
       this.#postChatResult(`Everyone busted! The pot of ${this.#state.pot} gp is lost to the house.`);
       return;
     }
@@ -519,28 +526,35 @@ export class GameManager {
     const highScore = eligible[0].total;
     const winners = eligible.filter(p => p.total === highScore);
 
+    // ── SET ALL STATE SYNCHRONOUSLY before any awaits ──
+    // This prevents the race condition where #broadcastState fires
+    // before the async currency updates finish.
+
     if (winners.length === 1) {
       const winner = winners[0];
       this.#state.winnerId = winner.actorId;
+      this.#state.roundLog.push(`${winner.name} wins ${this.#state.pot} gp with ${winner.total}!`);
+
+      // Async operations AFTER state is set
       const actor = game.actors.get(winner.actorId);
       if (actor) await actor.update({ 'system.currency.gp': actor.system.currency.gp + this.#state.pot });
-      this.#state.roundLog.push(`${winner.name} wins ${this.#state.pot} gp with ${winner.total}!`);
       this.#postChatResult(`${winner.name} wins ${this.#state.pot} gp at Baldur's Bones with a score of ${winner.total}!`);
       if (winner.isNPC && Math.random() < NPC_CHAT_CHANCE.WIN) {
         setTimeout(() => this.#postNPCChat(winner, this.#pick(NPC_TALK.WIN)), 800);
       }
     } else {
-      // Tie — split pot evenly
       const share = Math.floor(this.#state.pot / winners.length);
       const remainder = this.#state.pot - (share * winners.length);
-      for (const w of winners) {
-        const actor = game.actors.get(w.actorId);
-        if (actor) await actor.update({ 'system.currency.gp': actor.system.currency.gp + share });
-      }
       const names = winners.map(w => w.name).join(' and ');
       this.#state.winnerId = 'tie';
       this.#state.roundLog.push(`Push! ${names} tied at ${highScore} and split the pot (${share} gp each).`);
       if (remainder > 0) this.#state.roundLog.push(`${remainder} gp remainder to the house.`);
+
+      // Async operations AFTER state is set
+      for (const w of winners) {
+        const actor = game.actors.get(w.actorId);
+        if (actor) await actor.update({ 'system.currency.gp': actor.system.currency.gp + share });
+      }
       this.#postChatResult(`Push! ${names} tie at ${highScore} and split the ${this.#state.pot} gp pot!`);
     }
   }
@@ -580,6 +594,18 @@ export class GameManager {
     this.#state = null;
     this.#broadcast(SOCKET_ACTION.CLOSE_APP, {});
     if (this.#app?.rendered) this.#app.close();
+  }
+
+  /** GM cancels the current round. All players forfeit the pot. */
+  forfeitGame() {
+    if (!game.user.isGM || !this.#state) return;
+    this.#cancelNPC();
+    this.#state.phase = PHASE.RESOLUTION;
+    this.#state.winnerId = null;
+    this.#state.roundLog.push(`The game was called off. The pot of ${this.#state.pot} gp is forfeit.`);
+    this.#postChatResult(`The game of Baldur's Bones was called off! The ${this.#state.pot} gp pot is forfeit.`);
+    this.#broadcastState();
+    this.#renderApp();
   }
 
   /* ── Public Helpers ────────────────────────── */

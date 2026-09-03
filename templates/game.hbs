@@ -21,13 +21,16 @@
       </div>
       {{#if isGM}}
       <div class="bb-setup-field">
-        <label for="bb-actor-select"><i class="fas fa-user-plus"></i> Add Player</label>
-        <div class="bb-add-row">
-          <select id="bb-actor-select">
-            <option value="">— Choose a player —</option>
-            {{#each availableActors}}<option value="{{this.id}}">{{this.name}}</option>{{/each}}
-          </select>
-          <button data-action="add-player" class="bb-btn bb-btn-add"><i class="fas fa-plus"></i></button>
+        <label for="bb-actor-search"><i class="fas fa-user-plus"></i> Add Player</label>
+        <div class="bb-add-col">
+          <input type="text" id="bb-actor-search" placeholder="Search…" class="bb-search-input" autocomplete="off" />
+          <div class="bb-add-row">
+            <select id="bb-actor-select">
+              <option value="">— Choose a player —</option>
+              {{#each availableActors}}<option value="{{this.id}}">{{this.name}}</option>{{/each}}
+            </select>
+            <button data-action="add-player" class="bb-btn bb-btn-add"><i class="fas fa-plus"></i></button>
+          </div>
         </div>
       </div>
       {{/if}}
@@ -82,9 +85,11 @@
       <div class="bb-turn-prompt">{{currentPlayerName}} — roll your starting bones!</div>
       <div class="bb-action-buttons">
         <button data-action="initial-roll" data-actor-id="{{currentActorId}}" class="bb-btn bb-btn-roll"><i class="fas fa-dice"></i> Roll 3d6</button>
+        {{#if isGM}}<button data-action="forfeit" class="bb-btn bb-btn-forfeit" title="End Round"><i class="fas fa-ban"></i> End Round</button>{{/if}}
       </div>
       {{else if currentIsNPC}}
       <div class="bb-turn-prompt bb-npc-thinking"><i class="fas fa-dice bb-spin"></i> {{currentPlayerName}} is rolling…</div>
+      {{#if isGM}}<div class="bb-action-buttons"><button data-action="forfeit" class="bb-btn bb-btn-forfeit" title="End Round"><i class="fas fa-ban"></i> End Round</button></div>{{/if}}
       {{else}}
       <div class="bb-turn-prompt">Waiting for {{currentPlayerName}} to roll…</div>
       {{/if}}
@@ -100,6 +105,7 @@
         <button data-action="roll" data-actor-id="{{currentActorId}}" class="bb-btn bb-btn-roll"><i class="fas fa-dice"></i> Roll</button>
         <button data-action="stand" data-actor-id="{{currentActorId}}" class="bb-btn bb-btn-stand"><i class="fas fa-hand"></i> Stand</button>
         {{#if canCheat}}<button data-action="cheat" class="bb-btn bb-btn-cheat" title="Sleight of Hand"><i class="fas fa-hand-sparkles"></i></button>{{/if}}
+        {{#if isGM}}<button data-action="forfeit" class="bb-btn bb-btn-forfeit" title="End Round"><i class="fas fa-ban"></i></button>{{/if}}
       </div>
       <div class="bb-cheat-picker" id="bb-cheat-picker" style="display:none">
         <div class="bb-cheat-label">Pick your number:</div>

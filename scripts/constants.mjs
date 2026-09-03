@@ -31,10 +31,10 @@ export const PLAYER_ACTION = {
 };
 
 export const NPC_CHAT_CHANCE = {
-  ROLL: 0.40,
-  STAND: 0.50,
-  BUST: 0.75,
-  WIN: 0.90
+  ROLL: 0.25,
+  STAND: 0.25,
+  BUST: 0.25,
+  WIN: 0.25
 };
 
 export const NPC_TALK = {
