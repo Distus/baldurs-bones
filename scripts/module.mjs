@@ -11,6 +11,9 @@ Hooks.once('init', () => {
   if (!Handlebars.helpers['bbeq']) {
     Handlebars.registerHelper('bbeq', (a, b) => a === b);
   }
+  if (!Handlebars.helpers['array']) {
+    Handlebars.registerHelper('array', (...args) => args.slice(0, -1));
+  }
 });
 
 Hooks.once('ready', () => {

@@ -1,24 +1,16 @@
 {{#if hasGame}}
 <div class="bb-container">
 
-  {{!-- Header bar --}}
   <div class="bb-header">
-    <div class="bb-title">
-      <i class="fas fa-dice"></i>
-      <span>Baldur's Bones</span>
-    </div>
-    {{#unless isSetup}}
-    <div class="bb-pot-display">
-      <i class="fas fa-coins"></i>
-      <span class="bb-pot-amount">{{pot}} gp</span>
-    </div>
-    {{/unless}}
+    <div class="bb-title"><i class="fas fa-dice"></i><span>Baldur's Bones</span></div>
+    {{#if isSetup}}{{else}}
+    <div class="bb-pot-display"><i class="fas fa-coins"></i><span class="bb-pot-amount">{{pot}} gp</span></div>
+    {{/if}}
   </div>
 
-  {{!-- ==================== SETUP PHASE ==================== --}}
+  {{!-- ═══ SETUP ═══ --}}
   {{#if isSetup}}
   <div class="bb-setup">
-
     <div class="bb-setup-panel">
       <div class="bb-setup-field">
         <label for="bb-ante-input"><i class="fas fa-coins"></i> Ante</label>
@@ -27,23 +19,19 @@
           <span class="bb-ante-unit">gp</span>
         </div>
       </div>
-
       {{#if isGM}}
       <div class="bb-setup-field">
         <label for="bb-actor-select"><i class="fas fa-user-plus"></i> Add Player</label>
         <div class="bb-add-row">
           <select id="bb-actor-select">
             <option value="">— Choose a player —</option>
-            {{#each availableActors}}
-            <option value="{{this.id}}">{{this.name}}</option>
-            {{/each}}
+            {{#each availableActors}}<option value="{{this.id}}">{{this.name}}</option>{{/each}}
           </select>
-          <button data-action="add-player" class="bb-btn bb-btn-add" title="Add"><i class="fas fa-plus"></i></button>
+          <button data-action="add-player" class="bb-btn bb-btn-add"><i class="fas fa-plus"></i></button>
         </div>
       </div>
       {{/if}}
     </div>
-
     {{#if players.length}}
     <div class="bb-roster">
       <div class="bb-roster-header">Players at the Table</div>
@@ -52,27 +40,18 @@
         <img src="{{this.img}}" alt="{{this.name}}" class="bb-avatar" />
         <span class="bb-roster-name">{{this.name}}</span>
         {{#if this.isNPC}}<span class="bb-tag bb-tag-npc">NPC</span>{{/if}}
-        {{#if ../isGM}}
-        <button data-action="remove-player" data-actor-id="{{this.actorId}}" class="bb-btn-remove" title="Remove">
-          <i class="fas fa-times"></i>
-        </button>
-        {{/if}}
+        {{#if this.isHost}}<span class="bb-tag bb-tag-host">HOST</span>{{/if}}
+        {{#if ../isGM}}<button data-action="remove-player" data-actor-id="{{this.actorId}}" class="bb-btn-remove"><i class="fas fa-times"></i></button>{{/if}}
       </div>
       {{/each}}
     </div>
     {{/if}}
-
-    {{#if isGM}}
-    <button data-action="start-game" class="bb-btn bb-btn-start">
-      <i class="fas fa-play"></i> Deal the Bones
-    </button>
-    {{else}}
-    <p class="bb-waiting"><i class="fas fa-hourglass-half"></i> Waiting for the host…</p>
-    {{/if}}
+    {{#if isGM}}<button data-action="start-game" class="bb-btn bb-btn-start"><i class="fas fa-play"></i> Deal the Bones</button>
+    {{else}}<p class="bb-waiting"><i class="fas fa-hourglass-half"></i> Waiting for the host…</p>{{/if}}
   </div>
   {{/if}}
 
-  {{!-- ==================== PLAYING / RESOLUTION ==================== --}}
+  {{!-- ═══ INITIAL ROLL / PLAYING / RESOLUTION ═══ --}}
   {{#unless isSetup}}
   <div class="bb-table">
 
@@ -83,60 +62,68 @@
         <div class="bb-card-top">
           <img src="{{this.img}}" alt="{{this.name}}" class="bb-avatar-sm" />
           <span class="bb-card-name">{{this.name}}</span>
+          {{#if this.isHost}}<span class="bb-tag bb-tag-host">HOST</span>{{/if}}
           {{#if this.isBust}}<span class="bb-tag bb-tag-bust">BUST</span>{{/if}}
           {{#if this.isStanding}}<span class="bb-tag bb-tag-stand">STAND</span>{{/if}}
           {{#if this.isWinner}}<span class="bb-tag bb-tag-winner">WIN</span>{{/if}}
         </div>
         <div class="bb-dice-tray">
-          {{#each this.diceValues}}
-          <div class="bb-die bb-die-{{this}}">
-            <div class="bb-pips"></div>
-          </div>
-          {{/each}}
+          {{#each this.diceValues}}<div class="bb-die bb-die-{{this}}"><div class="bb-pips"></div></div>{{/each}}
         </div>
         <div class="bb-score">{{this.total}}</div>
       </div>
       {{/each}}
     </div>
 
-    {{!-- Action area --}}
+    {{!-- ── INITIAL ROLL action bar ── --}}
+    {{#if isInitialRoll}}
+    <div class="bb-action-bar">
+      {{#if canAct}}
+      <div class="bb-turn-prompt">{{currentPlayerName}} — roll your starting bones!</div>
+      <div class="bb-action-buttons">
+        <button data-action="initial-roll" data-actor-id="{{currentActorId}}" class="bb-btn bb-btn-roll"><i class="fas fa-dice"></i> Roll 3d6</button>
+      </div>
+      {{else if currentIsNPC}}
+      <div class="bb-turn-prompt bb-npc-thinking"><i class="fas fa-dice bb-spin"></i> {{currentPlayerName}} is rolling…</div>
+      {{else}}
+      <div class="bb-turn-prompt">Waiting for {{currentPlayerName}} to roll…</div>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- ── PLAYING action bar ── --}}
     {{#if isPlaying}}
     <div class="bb-action-bar">
       {{#if canAct}}
       <div class="bb-turn-prompt">{{currentPlayerName}}'s turn</div>
-      <div class="bb-action-buttons">
-        <div class="bb-dice-stepper">
-          <button data-action="dice-down" class="bb-stepper-btn" title="Fewer dice"><i class="fas fa-minus"></i></button>
-          <input type="number" id="bb-dice-count" value="1" min="1" max="3" readonly />
-          <button data-action="dice-up" class="bb-stepper-btn" title="More dice"><i class="fas fa-plus"></i></button>
+      <div class="bb-action-buttons" id="bb-normal-actions">
+        <button data-action="roll" data-actor-id="{{currentActorId}}" class="bb-btn bb-btn-roll"><i class="fas fa-dice"></i> Roll</button>
+        <button data-action="stand" data-actor-id="{{currentActorId}}" class="bb-btn bb-btn-stand"><i class="fas fa-hand"></i> Stand</button>
+        {{#if canCheat}}<button data-action="cheat" class="bb-btn bb-btn-cheat" title="Sleight of Hand"><i class="fas fa-hand-sparkles"></i></button>{{/if}}
+      </div>
+      <div class="bb-cheat-picker" id="bb-cheat-picker" style="display:none">
+        <div class="bb-cheat-label">Pick your number:</div>
+        <div class="bb-cheat-dice">
+          {{#each (array 1 2 3 4 5 6)}}
+          <button data-action="cheat-pick" data-actor-id="{{../currentActorId}}" data-value="{{this}}" class="bb-die-btn bb-die bb-die-{{this}}"><div class="bb-pips"></div></button>
+          {{/each}}
         </div>
-        <button data-action="roll" data-actor-id="{{currentActorId}}" class="bb-btn bb-btn-roll">
-          <i class="fas fa-dice"></i> Roll
-        </button>
-        <button data-action="stand" data-actor-id="{{currentActorId}}" class="bb-btn bb-btn-stand">
-          <i class="fas fa-hand"></i> Stand
-        </button>
+        <button data-action="cancel-cheat" class="bb-btn bb-btn-cancel">Cancel</button>
       </div>
       {{else if currentIsNPC}}
-      <div class="bb-turn-prompt bb-npc-thinking">
-        <i class="fas fa-dice bb-spin"></i> {{currentPlayerName}} is pondering the bones…
-      </div>
+      <div class="bb-turn-prompt bb-npc-thinking"><i class="fas fa-dice bb-spin"></i> {{currentPlayerName}} is pondering the bones…</div>
       {{else}}
       <div class="bb-turn-prompt">Waiting for {{currentPlayerName}}…</div>
       {{/if}}
     </div>
     {{/if}}
 
-    {{!-- Resolution --}}
+    {{!-- ── RESOLUTION ── --}}
     {{#if isResolution}}
     <div class="bb-result-bar">
-      {{#if (bbeq winnerId 'tie')}}
-        <div class="bb-result-msg"><i class="fas fa-handshake"></i> It's a tie — pot split!</div>
-      {{else if winnerId}}
-        <div class="bb-result-msg"><i class="fas fa-trophy"></i> Winner takes the pot!</div>
-      {{else}}
-        <div class="bb-result-msg"><i class="fas fa-skull-crossbones"></i> Everyone busted! House wins.</div>
-      {{/if}}
+      {{#if (bbeq winnerId 'tie')}}<div class="bb-result-msg"><i class="fas fa-handshake"></i> It's a tie — pot split!</div>
+      {{else if winnerId}}<div class="bb-result-msg"><i class="fas fa-trophy"></i> Winner takes the pot!</div>
+      {{else}}<div class="bb-result-msg"><i class="fas fa-skull-crossbones"></i> Everyone busted! House wins.</div>{{/if}}
       {{#if isGM}}
       <div class="bb-action-buttons">
         <button data-action="play-again" class="bb-btn bb-btn-again"><i class="fas fa-redo"></i> Play Again</button>
@@ -146,21 +133,13 @@
     </div>
     {{/if}}
 
-    {{!-- Round log --}}
     {{#if roundLog.length}}
-    <div class="bb-log">
-      {{#each roundLog}}
-      <div class="bb-log-line">{{this}}</div>
-      {{/each}}
-    </div>
+    <div class="bb-log">{{#each roundLog}}<div class="bb-log-line">{{this}}</div>{{/each}}</div>
     {{/if}}
-
   </div>
   {{/unless}}
 
 </div>
 {{else}}
-<div class="bb-container bb-empty">
-  <p>No game in progress.</p>
-</div>
+<div class="bb-container bb-empty"><p>No game in progress.</p></div>
 {{/if}}

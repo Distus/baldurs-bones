@@ -315,55 +315,6 @@
 }
 
 /* =============================================
-   Dice Count Stepper
-   ============================================= */
-
-.bb-dice-stepper {
-  display: inline-flex;
-  align-items: center;
-  background: var(--bb-wood);
-  border: 1px solid var(--bb-gold-dim);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.bb-stepper-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px; height: 32px;
-  background: transparent;
-  border: none;
-  color: var(--bb-gold);
-  cursor: pointer;
-  font-size: 0.7rem;
-  transition: background 0.15s;
-}
-
-.bb-stepper-btn:hover {
-  background: rgba(255,255,255,0.08);
-}
-
-#bb-dice-count {
-  width: 28px; height: 32px;
-  text-align: center;
-  background: rgba(0,0,0,0.3);
-  border: none;
-  border-left: 1px solid var(--bb-gold-dim);
-  border-right: 1px solid var(--bb-gold-dim);
-  color: var(--bb-gold);
-  font-size: 1rem;
-  font-weight: 700;
-  -moz-appearance: textfield;
-}
-
-#bb-dice-count::-webkit-inner-spin-button,
-#bb-dice-count::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* =============================================
    Game Table
    ============================================= */
 
@@ -610,4 +561,76 @@
   color: #e8e0d0;
   border-left: 3px solid #d4a017;
   font-size: 0.9rem;
+}
+
+/* =============================================
+   Host Tag
+   ============================================= */
+
+.bb-tag-host {
+  background: var(--bb-gold-dim);
+  color: #fff;
+}
+
+/* =============================================
+   Cheat (Sleight of Hand) UI
+   ============================================= */
+
+.bb-btn-cheat {
+  padding: 0.5rem 0.7rem;
+  background: linear-gradient(180deg, #5c3d6e 0%, #3d2748 100%);
+  border: 1px solid #7a5090;
+  color: #dcc8f0;
+  font-size: 1rem;
+}
+.bb-btn-cheat:hover {
+  background: linear-gradient(180deg, #6e4d82 0%, #4a305a 100%);
+}
+
+.bb-cheat-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bb-cheat-label {
+  font-size: 0.85rem;
+  color: #dcc8f0;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.bb-cheat-dice {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.bb-die-btn {
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: none;
+  background: var(--bb-die-bg);
+  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  position: relative;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.bb-die-btn .bb-pips {
+  position: absolute;
+  inset: 4px;
+}
+
+.bb-die-btn:hover {
+  transform: translateY(-2px) scale(1.1);
+  box-shadow: 0 0 10px rgba(92, 61, 110, 0.6), 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.bb-btn-cancel {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  opacity: 0.7;
 }
