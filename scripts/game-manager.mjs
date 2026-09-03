@@ -8,7 +8,6 @@ import {
  * all other clients receive state broadcasts and render accordingly.
  */
 export class GameManager {
-  /** @type {GameManager} */
   static #instance = null;
 
   /** @type {object|null} */
@@ -17,11 +16,12 @@ export class GameManager {
   /** @type {BaldursBonesApp|null} */
   #app = null;
 
-  /** @type {boolean} */
-  #npcActing = false;
-
-  /** @type {number|null} */
-  #npcTimeout = null;
+  /**
+   * Single timer ID for NPC actions. Every scheduled NPC action clears the
+   * previous one first, so there's never more than one pending at a time.
+   * @type {number|null}
+   */
+  #npcTimer = null;
 
   constructor() {
     if (GameManager.#instance) return GameManager.#instance;
@@ -40,10 +40,6 @@ export class GameManager {
   /* --------------------------------------------------
    * Utilities
    * -------------------------------------------------- */
-
-  #delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
 
   #pick(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
@@ -90,6 +86,7 @@ export class GameManager {
         break;
       case SOCKET_ACTION.CLOSE_APP:
         this.#state = null;
+        this.#cancelNPC();
         if (this.#app?.rendered) this.#app.close();
         break;
     }
@@ -205,7 +202,9 @@ export class GameManager {
 
     this.#broadcast(SOCKET_ACTION.OPEN_APP, { state: this.#state });
     this.#renderApp();
-    this.#checkNPCAutoPlay();
+
+    // Kick off NPC auto-play if first player is NPC
+    this.#scheduleNPCAction();
   }
 
   /* --------------------------------------------------
@@ -237,19 +236,14 @@ export class GameManager {
       const results = roll.terms[0].results.map(r => r.result);
       player.dice.push(...results);
       player.total += roll.total;
-
       const diceStr = results.join(', ');
 
       if (player.total > BUST_THRESHOLD) {
         player.status = STATUS.BUST;
-        this.#state.roundLog.push(
-          `${player.name} rolled ${diceStr} (${formula}) → ${player.total} — BUST!`
-        );
+        this.#state.roundLog.push(`${player.name} rolled ${diceStr} (${formula}) → ${player.total} — BUST!`);
         this.#advanceTurn();
       } else {
-        this.#state.roundLog.push(
-          `${player.name} rolled ${diceStr} (${formula}) → ${player.total}`
-        );
+        this.#state.roundLog.push(`${player.name} rolled ${diceStr} (${formula}) → ${player.total}`);
       }
     } else if (action === PLAYER_ACTION.STAND) {
       player.status = STATUS.STANDING;
@@ -259,6 +253,12 @@ export class GameManager {
 
     this.#broadcastState();
     this.#renderApp();
+
+    // After a human player acts, check if the next player is NPC
+    // (NPC chains are handled inside #scheduleNPCAction itself)
+    if (!player.isNPC) {
+      this.#scheduleNPCAction();
+    }
   }
 
   #advanceTurn() {
@@ -280,100 +280,118 @@ export class GameManager {
   }
 
   /* --------------------------------------------------
-   * NPC Auto-Play
+   * NPC Auto-Play — simple timer-based approach
+   *
+   * Each call to #scheduleNPCAction() sets a single setTimeout.
+   * The callback performs ONE action (roll or stand), then calls
+   * #scheduleNPCAction() again. If anything throws, the NPC is
+   * force-stood to prevent limbo.
+   *
+   * No async chains, no promise tracking, no #npcActing flag.
    * -------------------------------------------------- */
 
-  #checkNPCAutoPlay() {
-    if (!game.user.isGM || this.#state?.phase !== PHASE.PLAYING) return;
-    if (this.#npcActing) return;
-
-    const current = this.getCurrentPlayer();
-    if (!current || !current.isNPC || current.status !== STATUS.ACTIVE) return;
-
-    this.#npcActing = true;
-    this.#clearNPCTimeout();
-
-    // Safety: force-stand after 30s to prevent limbo
-    this.#npcTimeout = setTimeout(() => {
-      console.warn(`${MODULE_ID} | NPC turn timeout — forcing stand.`);
-      this.#npcActing = false;
-      if (this.#state?.phase === PHASE.PLAYING) {
-        const cur = this.getCurrentPlayer();
-        if (cur?.isNPC && cur.status === STATUS.ACTIVE) {
-          cur.status = STATUS.STANDING;
-          this.#state.roundLog.push(`${cur.name} takes too long and stands at ${cur.total}.`);
-          this.#advanceTurn();
-          this.#broadcastState();
-          this.#renderApp();
-          this.#checkNPCAutoPlay();
-        }
-      }
-    }, 30000);
-
-    this.#runNPCTurn(current)
-      .catch(err => console.error(`${MODULE_ID} | NPC auto-play error:`, err))
-      .finally(() => {
-        this.#npcActing = false;
-        this.#clearNPCTimeout();
-      });
-  }
-
-  #clearNPCTimeout() {
-    if (this.#npcTimeout) {
-      clearTimeout(this.#npcTimeout);
-      this.#npcTimeout = null;
-    }
-  }
-
-  async #runNPCTurn(player) {
-    while (player.status === STATUS.ACTIVE && this.#state?.phase === PHASE.PLAYING) {
-      const current = this.getCurrentPlayer();
-      if (!current || current.actorId !== player.actorId) break;
-
-      await this.#delay(1000 + Math.random() * 800);
-
-      // Guard after delay
-      if (!this.#state || this.#state.phase !== PHASE.PLAYING) break;
-      if (player.status !== STATUS.ACTIVE) break;
-
-      const action = this.#npcDecide(player);
-
-      if (action === PLAYER_ACTION.ROLL) {
-        this.#postNPCChat(player, this.#pick(NPC_TALK.ROLL));
-      } else {
-        this.#postNPCChat(player, this.#pick(NPC_TALK.STAND));
-      }
-
-      await this.#delay(600);
-      if (!this.#state || this.#state.phase !== PHASE.PLAYING) break;
-
-      await this.#processPlayerAction(player.actorId, action, 1);
-
-      if (player.status === STATUS.BUST) {
-        await this.#delay(500);
-        this.#postNPCChat(player, this.#pick(NPC_TALK.BUST));
-      }
-
-      if (action === PLAYER_ACTION.STAND || player.status === STATUS.BUST) break;
-    }
-
-    // Check if the next player is also an NPC
-    if (this.#state?.phase === PHASE.PLAYING) {
-      await this.#delay(400);
-      this.#npcActing = false;
-      this.#clearNPCTimeout();
-      this.#checkNPCAutoPlay();
+  /** Cancel any pending NPC action. */
+  #cancelNPC() {
+    if (this.#npcTimer !== null) {
+      clearTimeout(this.#npcTimer);
+      this.#npcTimer = null;
     }
   }
 
   /**
-   * INT-based NPC decision logic.
-   *
-   * High INT → accurate risk perception → stands at smart thresholds.
-   * Low INT  → underestimates bust risk → pushes luck more often.
-   *
-   * Never stands at 16 or below.
+   * If the current player is an NPC, schedule their next action.
+   * Safe to call at any time — bails immediately if conditions aren't met.
    */
+  #scheduleNPCAction() {
+    this.#cancelNPC();
+
+    if (!game.user.isGM) return;
+    if (!this.#state || this.#state.phase !== PHASE.PLAYING) return;
+
+    const player = this.getCurrentPlayer();
+    if (!player || !player.isNPC || player.status !== STATUS.ACTIVE) return;
+
+    const delay = 1200 + Math.random() * 800;
+
+    this.#npcTimer = setTimeout(() => {
+      this.#npcTimer = null;
+      this.#executeNPCAction(player);
+    }, delay);
+  }
+
+  /**
+   * Execute one NPC action. Wrapped entirely in try/catch —
+   * any failure force-stands the NPC and advances the turn.
+   */
+  async #executeNPCAction(player) {
+    try {
+      // Re-validate: is this player still the active NPC?
+      if (!this.#state || this.#state.phase !== PHASE.PLAYING) return;
+      if (player.status !== STATUS.ACTIVE) return;
+      const current = this.getCurrentPlayer();
+      if (!current || current.actorId !== player.actorId) return;
+
+      // Decide
+      const action = this.#npcDecide(player);
+
+      // Smack-talk
+      this.#postNPCChat(player, this.#pick(
+        action === PLAYER_ACTION.ROLL ? NPC_TALK.ROLL : NPC_TALK.STAND
+      ));
+
+      // Brief pause after talking, then act
+      this.#npcTimer = setTimeout(async () => {
+        this.#npcTimer = null;
+        try {
+          // Guard again after pause
+          if (!this.#state || this.#state.phase !== PHASE.PLAYING) return;
+          if (player.status !== STATUS.ACTIVE) return;
+
+          // Execute the action
+          await this.#processPlayerAction(player.actorId, action, 1);
+
+          // Post bust reaction if applicable
+          if (player.status === STATUS.BUST) {
+            this.#postNPCChat(player, this.#pick(NPC_TALK.BUST));
+          }
+
+          // Schedule next: could be another roll from same NPC, or next NPC
+          this.#scheduleNPCAction();
+
+        } catch (innerErr) {
+          console.error(`${MODULE_ID} | NPC execute error:`, innerErr);
+          this.#forceStandNPC(player);
+        }
+      }, 600);
+
+    } catch (outerErr) {
+      console.error(`${MODULE_ID} | NPC decision error:`, outerErr);
+      this.#forceStandNPC(player);
+    }
+  }
+
+  /**
+   * Emergency bail-out: stand the NPC and advance the game.
+   */
+  #forceStandNPC(player) {
+    if (!this.#state || this.#state.phase !== PHASE.PLAYING) return;
+    if (player.status !== STATUS.ACTIVE) return;
+
+    console.warn(`${MODULE_ID} | Force-standing ${player.name} due to error.`);
+    player.status = STATUS.STANDING;
+    this.#state.roundLog.push(`${player.name} hesitates and stands at ${player.total}.`);
+    this.#advanceTurn();
+    this.#broadcastState();
+    this.#renderApp();
+
+    // Check if next player is also NPC
+    this.#scheduleNPCAction();
+  }
+
+  /* --------------------------------------------------
+   * NPC decision logic (INT-based)
+   * -------------------------------------------------- */
+
   #npcDecide(player) {
     const total = player.total;
     if (total <= 16) return PLAYER_ACTION.ROLL;
@@ -384,20 +402,16 @@ export class GameManager {
     // Smart factor: 0.0 (INT 1) → 1.0 (INT 20)
     const smart = Math.max(0, Math.min(1, (intScore - 1) / 19));
 
-    // Actual bust probability at this total:
-    //   17 → 2/6 = 33%    18 → 3/6 = 50%
-    //   19 → 4/6 = 67%    20 → 5/6 = 83%
+    // Bust probability: 17→33%, 18→50%, 19→67%, 20→83%
     const bustChance = Math.max(0, Math.min(1, (total - 15) / 6));
 
-    // Smart NPCs perceive risk accurately (1.0×).
-    // Dumb NPCs underestimate it (down to 0.4×).
+    // High INT perceives risk accurately; low INT underestimates it
     const riskPerception = 0.4 + (smart * 0.6);
     let standChance = bustChance * riskPerception;
 
-    // Add noise inversely proportional to INT
+    // Noise: wider for low INT
     const noise = (1 - smart) * 0.2;
     standChance += (Math.random() - 0.5) * 2 * noise;
-
     standChance = Math.max(0.05, Math.min(0.95, standChance));
 
     return Math.random() < standChance ? PLAYER_ACTION.STAND : PLAYER_ACTION.ROLL;
@@ -419,6 +433,7 @@ export class GameManager {
    * -------------------------------------------------- */
 
   async #resolveGame() {
+    this.#cancelNPC();
     this.#state.phase = PHASE.RESOLUTION;
     const eligible = this.#state.players.filter(p => p.status !== STATUS.BUST);
 
@@ -456,9 +471,9 @@ export class GameManager {
       }
       const names = winners.map(w => w.name).join(' and ');
       this.#state.winnerId = 'tie';
-      this.#state.roundLog.push(`Tie! ${names} split the pot of ${this.#state.pot} gp (${share} gp each).`);
+      this.#state.roundLog.push(`Tie! ${names} split the pot (${share} gp each).`);
       if (remainder > 0) this.#state.roundLog.push(`${remainder} gp remainder goes to the house.`);
-      this.#postChatResult(`${names} tie at ${highScore} and split the ${this.#state.pot} gp pot at Baldur's Bones!`);
+      this.#postChatResult(`${names} tie at ${highScore} and split the ${this.#state.pot} gp pot!`);
     }
   }
 
@@ -475,8 +490,7 @@ export class GameManager {
 
   playAgain() {
     if (!game.user.isGM) return;
-    this.#clearNPCTimeout();
-    this.#npcActing = false;
+    this.#cancelNPC();
     for (const p of this.#state.players) {
       p.dice = [];
       p.total = 0;
@@ -493,8 +507,7 @@ export class GameManager {
 
   endGame() {
     if (!game.user.isGM) return;
-    this.#clearNPCTimeout();
-    this.#npcActing = false;
+    this.#cancelNPC();
     this.#state = null;
     this.#broadcast(SOCKET_ACTION.CLOSE_APP, {});
     if (this.#app?.rendered) this.#app.close();
@@ -504,11 +517,6 @@ export class GameManager {
    * Public helpers
    * -------------------------------------------------- */
 
-  /**
-   * Uses Foundry's native actor.isOwner for reliable permission checking
-   * across all Foundry versions. Returns true for the owning player
-   * and for the GM.
-   */
   canCurrentUserAct() {
     if (!this.#state || this.#state.phase !== PHASE.PLAYING) return false;
     const current = this.#state.players[this.#state.currentPlayerIndex];
