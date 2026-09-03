@@ -29,7 +29,10 @@ export class GameManager {
   async #roll(formula) {
     const roll = await new Roll(formula).evaluate();
     if (this.#hasDSN) {
-      try { await game.dice3d.showForRoll(roll, game.user, true); }
+      try {
+        // Await fully so DSN clears previous dice before showing new ones
+        await game.dice3d.showForRoll(roll, game.user, true);
+      }
       catch (e) { console.warn(`${MODULE_ID} | DSN error:`, e); }
     }
     return roll;
@@ -118,11 +121,6 @@ export class GameManager {
       this.#state.originalOrder = this.#state.players.map(p => p.actorId);
     }
 
-    // If host already set (from playAgain rotation), reorder now
-    if (this.#state.hostActorId) {
-      this.#reorderWithHostLast();
-    }
-
     // Validate antes
     for (const p of this.#state.players) {
       const actor = game.actors.get(p.actorId);
@@ -192,17 +190,16 @@ export class GameManager {
   }
 
   #finishInitialRolls() {
-    // First round: host = lowest roller
-    if (!this.#state.hostActorId) {
-      const eligible = this.#state.players.filter(p => p.status !== STATUS.BUST);
-      if (eligible.length > 0) {
-        eligible.sort((a, b) => a.total - b.total);
-        this.#state.hostActorId = eligible[0].actorId;
-      } else {
-        this.#state.hostActorId = this.#state.players[0].actorId;
-      }
-      this.#reorderWithHostLast();
+    // Host = lowest initial roller every round. Ties broken randomly.
+    const eligible = this.#state.players.filter(p => p.status !== STATUS.BUST);
+    if (eligible.length > 0) {
+      const lowestTotal = Math.min(...eligible.map(p => p.total));
+      const lowestRollers = eligible.filter(p => p.total === lowestTotal);
+      this.#state.hostActorId = this.#pick(lowestRollers).actorId;
+    } else {
+      this.#state.hostActorId = this.#pick(this.#state.players).actorId;
     }
+    this.#reorderWithHostLast();
 
     const hostName = this.#state.players.find(p => p.actorId === this.#state.hostActorId)?.name ?? '?';
     this.#state.roundLog.push(`${hostName} is hosting (lowest roll).`);
@@ -571,10 +568,8 @@ export class GameManager {
     if (!game.user.isGM) return;
     this.#cancelNPC();
 
-    // Rotate host to next in originalOrder
-    const order = this.#state.originalOrder;
-    const curIdx = order.indexOf(this.#state.hostActorId);
-    this.#state.hostActorId = order[(curIdx + 1) % order.length];
+    // Clear host — will be re-determined by lowest initial roll
+    this.#state.hostActorId = null;
 
     // Reset all players
     for (const p of this.#state.players) {

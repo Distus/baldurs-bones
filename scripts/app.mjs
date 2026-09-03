@@ -8,7 +8,7 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
     id: 'baldurs-bones-app',
     classes: ['baldurs-bones'],
     window: { title: "Baldur's Bones", resizable: true, icon: 'fas fa-dice' },
-    position: { width: 660, height: 560 }
+    position: { width: 660, height: 620 }
   };
   static PARTS = { main: { template: `modules/${MODULE_ID}/templates/game.hbs` } };
 
@@ -21,6 +21,11 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const currentPlayer = gm.getCurrentPlayer();
     const canAct = gm.canCurrentUserAct();
     const canCheat = canAct && state.phase === PHASE.PLAYING && gm.getCheatEligibility() !== null;
+    const isTablePhase = state.phase === PHASE.PLAYING || state.phase === PHASE.INITIAL_ROLL || state.phase === PHASE.RESOLUTION;
+
+    // Compute round-table positions for each player
+    const count = state.players.length;
+    const radius = count <= 3 ? 34 : count <= 5 ? 38 : 41;
 
     let availableActors = [];
     if (isGM && state.phase === PHASE.SETUP) {
@@ -31,23 +36,43 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
         .sort((a, b) => a.name.localeCompare(b.name));
     }
 
+    // Winner info for resolution
+    let winnerName = null, winnerImg = null;
+    if (state.phase === PHASE.RESOLUTION && state.winnerId && state.winnerId !== 'tie') {
+      const wp = state.players.find(p => p.actorId === state.winnerId);
+      if (wp) { winnerName = wp.name; winnerImg = wp.img; }
+    }
+
+    // Coin pile: one coin per player who anted, up to 10 visual coins
+    const showCoins = state.phase !== PHASE.SETUP && state.pot > 0;
+    const coinCount = showCoins ? Math.min(state.players.length * 2, 12) : 0;
+    const coins = [];
+    for (let i = 0; i < coinCount; i++) coins.push({ index: i });
+
     return {
-      hasGame: true, isGM, state,
+      hasGame: true, isGM, state, isTablePhase,
       isSetup: state.phase === PHASE.SETUP,
       isInitialRoll: state.phase === PHASE.INITIAL_ROLL,
       isPlaying: state.phase === PHASE.PLAYING,
       isResolution: state.phase === PHASE.RESOLUTION,
-      players: state.players.map(p => ({
-        ...p,
-        isCurrent: (state.phase === PHASE.PLAYING || state.phase === PHASE.INITIAL_ROLL) &&
-                   state.players[state.currentPlayerIndex]?.actorId === p.actorId,
-        isBust: p.status === STATUS.BUST,
-        isStanding: p.status === STATUS.STANDING,
-        isWinner: state.winnerId === p.actorId,
-        isHost: p.actorId === state.hostActorId,
-        hasRolled: p.dice.length > 0,
-        diceValues: p.dice
-      })),
+      players: state.players.map((p, i) => {
+        const angle = (i / count) * 2 * Math.PI - Math.PI / 2;
+        const posX = (50 + radius * Math.cos(angle)).toFixed(1);
+        const posY = (50 + radius * Math.sin(angle)).toFixed(1);
+        return {
+          ...p,
+          isCurrent: (state.phase === PHASE.PLAYING || state.phase === PHASE.INITIAL_ROLL) &&
+                     state.players[state.currentPlayerIndex]?.actorId === p.actorId,
+          isBust: p.status === STATUS.BUST,
+          isStanding: p.status === STATUS.STANDING,
+          isWinner: state.winnerId === p.actorId,
+          isHost: p.actorId === state.hostActorId,
+          hasRolled: p.dice.length > 0,
+          diceValues: p.dice,
+          posX, posY
+        };
+      }),
+      playerCount: count,
       ante: state.ante, pot: state.pot,
       canAct, canCheat,
       currentPlayerName: currentPlayer?.name ?? '',
@@ -55,7 +80,9 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
       currentIsNPC: currentPlayer?.isNPC ?? false,
       availableActors,
       roundLog: state.roundLog ?? [],
-      winnerId: state.winnerId
+      winnerId: state.winnerId,
+      winnerName, winnerImg,
+      coins
     };
   }
 
@@ -81,7 +108,7 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
       searchInput.addEventListener('input', () => {
         const q = searchInput.value.toLowerCase();
         for (const opt of selectEl.options) {
-          if (!opt.value) continue; // skip placeholder
+          if (!opt.value) continue;
           opt.hidden = q.length > 0 && !opt.textContent.toLowerCase().includes(q);
         }
       });
@@ -93,7 +120,7 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
       GameManager.instance.submitInitialRoll(actorId);
     });
 
-    // Playing: roll (always 1d6)
+    // Playing: roll & stand
     html.querySelector('[data-action="roll"]')?.addEventListener('click', () => {
       const actorId = html.querySelector('[data-action="roll"]').dataset.actorId;
       GameManager.instance.submitAction(actorId, PLAYER_ACTION.ROLL);
@@ -103,7 +130,7 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
       GameManager.instance.submitAction(actorId, PLAYER_ACTION.STAND);
     });
 
-    // Cheat toggle
+    // Cheat
     html.querySelector('[data-action="cheat"]')?.addEventListener('click', () => {
       const n = html.querySelector('#bb-normal-actions');
       const p = html.querySelector('#bb-cheat-picker');
@@ -125,13 +152,11 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (p) p.style.display = 'none';
       }));
 
-    // Resolution
+    // Resolution & forfeit
     html.querySelector('[data-action="play-again"]')?.addEventListener('click', () =>
       GameManager.instance.playAgain());
     html.querySelector('[data-action="end-game"]')?.addEventListener('click', () =>
       GameManager.instance.endGame());
-
-    // Forfeit (GM cancels mid-round)
     html.querySelector('[data-action="forfeit"]')?.addEventListener('click', () =>
       GameManager.instance.forfeitGame());
 

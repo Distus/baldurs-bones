@@ -1,5 +1,5 @@
 /* =============================================
-   Baldur's Bones – Tavern Table Theme
+   Baldur's Bones – Tavern Round Table Theme
    ============================================= */
 
 .baldurs-bones {
@@ -26,643 +26,217 @@
   --bb-die-border: #b0a080;
 }
 
-/* Container */
 .bb-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding: 0;
-  height: 100%;
-  overflow-y: auto;
-  background:
-    radial-gradient(ellipse at 50% 30%, var(--bb-felt-light) 0%, var(--bb-felt) 50%, var(--bb-felt-dark) 100%);
+  display: flex; flex-direction: column; gap: 0.5rem; padding: 0;
+  height: 100%; overflow-y: auto;
+  background: radial-gradient(ellipse at 50% 30%, var(--bb-felt-light) 0%, var(--bb-felt) 50%, var(--bb-felt-dark) 100%);
   color: var(--bb-text);
   font-family: var(--font-primary, "Signika", sans-serif);
 }
+.bb-empty { display: flex; align-items: center; justify-content: center; font-style: italic; color: var(--bb-text-dim); }
 
-.bb-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-style: italic;
-  color: var(--bb-text-dim);
-}
-
-/* Header */
+/* ── Header ── */
 .bb-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.6rem 0.8rem;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.5rem 0.8rem;
   background: linear-gradient(180deg, var(--bb-wood) 0%, var(--bb-wood-light) 100%);
   border-bottom: 3px solid var(--bb-gold-dim);
   box-shadow: 0 2px 8px var(--bb-shadow);
 }
-
-.bb-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--bb-gold);
-  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
-  letter-spacing: 0.03em;
-}
-
-.bb-pot-display {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.25rem 0.7rem;
-  background: rgba(0,0,0,0.35);
-  border: 1px solid var(--bb-gold-dim);
-  border-radius: 20px;
-  color: var(--bb-gold);
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
+.bb-title { display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 700; color: var(--bb-gold); text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+.bb-pot-display { display: flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.6rem; background: rgba(0,0,0,0.35); border: 1px solid var(--bb-gold-dim); border-radius: 20px; color: var(--bb-gold); font-weight: 600; font-size: 0.9rem; }
 .bb-pot-amount { font-variant-numeric: tabular-nums; }
 
-/* =============================================
-   Setup Phase
-   ============================================= */
+/* ── Setup ── */
+.bb-setup { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.7rem; }
+.bb-setup-panel { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.6rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; }
+.bb-setup-field { display: flex; align-items: flex-start; gap: 0.5rem; }
+.bb-setup-field label { min-width: 90px; font-weight: 600; font-size: 0.82rem; color: var(--bb-ivory-dim); padding-top: 0.3rem; }
+.bb-ante-wrap { display: flex; align-items: center; gap: 0.3rem; }
+#bb-ante-input { width: 65px; padding: 0.25rem 0.4rem; border-radius: 4px; border: 1px solid var(--bb-gold-dim); background: var(--bb-wood); color: var(--bb-gold); text-align: center; font-weight: 600; font-size: 0.85rem; }
+.bb-ante-unit { font-size: 0.75rem; color: var(--bb-text-dim); }
+.bb-add-col { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; }
+.bb-add-row { display: flex; gap: 0.25rem; flex: 1; }
+.bb-search-input { padding: 0.25rem 0.4rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.12); background: var(--bb-wood); color: var(--bb-text); font-size: 0.78rem; }
+.bb-search-input::placeholder { color: var(--bb-text-dim); font-style: italic; }
+.bb-add-row select { flex: 1; padding: 0.25rem 0.4rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.12); background: var(--bb-wood); color: var(--bb-text); font-size: 0.82rem; }
+.bb-roster { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; overflow: hidden; }
+.bb-roster-header { padding: 0.3rem 0.6rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--bb-gold-dim); background: rgba(0,0,0,0.15); }
+.bb-roster-row { display: flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.6rem; }
+.bb-roster-row + .bb-roster-row { border-top: 1px solid rgba(255,255,255,0.04); }
+.bb-roster-name { font-weight: 600; flex: 1; font-size: 0.85rem; }
+.bb-waiting { text-align: center; font-style: italic; color: var(--bb-text-dim); padding: 0.4rem; }
 
-.bb-setup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  padding: 0.8rem;
-}
-
-.bb-setup-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding: 0.7rem;
-  background: rgba(0,0,0,0.2);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 8px;
-}
-
-.bb-setup-field {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.bb-setup-field label {
-  min-width: 100px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--bb-ivory-dim);
-}
-
-.bb-ante-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-#bb-ante-input {
-  width: 70px;
-  padding: 0.3rem 0.5rem;
-  border-radius: 4px;
-  border: 1px solid var(--bb-gold-dim);
-  background: var(--bb-wood);
-  color: var(--bb-gold);
-  text-align: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.bb-ante-unit {
-  font-size: 0.8rem;
-  color: var(--bb-text-dim);
-}
-
-.bb-add-row {
-  display: flex;
-  gap: 0.3rem;
-  flex: 1;
-}
-
-.bb-add-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  flex: 1;
-}
-
-.bb-search-input {
-  padding: 0.3rem 0.5rem;
-  border-radius: 4px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: var(--bb-wood);
-  color: var(--bb-text);
-  font-size: 0.8rem;
-}
-
-.bb-search-input::placeholder {
-  color: var(--bb-text-dim);
-  font-style: italic;
-}
-
-.bb-add-row select {
-  flex: 1;
-  padding: 0.3rem 0.5rem;
-  border-radius: 4px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: var(--bb-wood);
-  color: var(--bb-text);
-  font-size: 0.85rem;
-}
-
-/* Roster */
-.bb-roster {
-  background: rgba(0,0,0,0.2);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.bb-roster-header {
-  padding: 0.35rem 0.7rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--bb-gold-dim);
-  background: rgba(0,0,0,0.15);
-}
-
-.bb-roster-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.7rem;
-}
-
-.bb-roster-row + .bb-roster-row {
-  border-top: 1px solid rgba(255,255,255,0.04);
-}
-
-.bb-roster-name { font-weight: 600; flex: 1; font-size: 0.9rem; }
-
-.bb-waiting {
-  text-align: center;
-  font-style: italic;
-  color: var(--bb-text-dim);
-  padding: 0.5rem;
-}
-
-/* =============================================
-   Shared Elements
-   ============================================= */
-
-.bb-avatar, .bb-avatar-sm {
-  border-radius: 50%;
-  border: 2px solid var(--bb-gold-dim);
-  object-fit: cover;
-  box-shadow: 0 1px 3px var(--bb-shadow);
-}
-.bb-avatar { width: 32px; height: 32px; }
-.bb-avatar-sm { width: 26px; height: 26px; }
-
-.bb-tag {
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  font-weight: 700;
-  padding: 0.1rem 0.35rem;
-  border-radius: 3px;
-  letter-spacing: 0.06em;
-  line-height: 1;
-}
-
+/* ── Shared ── */
+.bb-avatar, .bb-avatar-sm { border-radius: 50%; border: 2px solid var(--bb-gold-dim); object-fit: cover; box-shadow: 0 1px 3px var(--bb-shadow); }
+.bb-avatar { width: 30px; height: 30px; }
+.bb-avatar-sm { width: 24px; height: 24px; }
+.bb-tag { font-size: 0.55rem; text-transform: uppercase; font-weight: 700; padding: 0.08rem 0.3rem; border-radius: 3px; letter-spacing: 0.05em; line-height: 1; white-space: nowrap; }
 .bb-tag-npc { background: rgba(255,255,255,0.1); color: var(--bb-text-dim); }
 .bb-tag-bust { background: var(--bb-red); color: #fcc; }
 .bb-tag-stand { background: var(--bb-blue); color: #b8d4f0; }
 .bb-tag-winner { background: var(--bb-gold-dim); color: #fff; }
+.bb-tag-host { background: #6b4423; color: var(--bb-gold); }
 
-/* =============================================
-   Buttons
-   ============================================= */
-
-.bb-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.9rem;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px;
-  background: var(--bb-wood-light);
-  color: var(--bb-text);
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 3px var(--bb-shadow);
-}
-
-.bb-btn:hover {
-  background: var(--bb-wood-mid);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px var(--bb-shadow);
-}
-
-.bb-btn-add {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px; height: 30px;
-  padding: 0;
-  border: 1px solid var(--bb-gold-dim);
-  border-radius: 4px;
-  background: var(--bb-wood);
-  color: var(--bb-gold);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.bb-btn-add:hover { background: var(--bb-wood-mid); }
-
-.bb-btn-remove {
-  background: none; border: none;
-  color: var(--bb-text-dim);
-  cursor: pointer; padding: 0.2rem;
-  font-size: 0.8rem; opacity: 0.5;
-  transition: all 0.15s;
-}
+/* ── Buttons ── */
+.bb-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.35rem 0.8rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; background: var(--bb-wood-light); color: var(--bb-text); cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.15s ease; box-shadow: 0 1px 3px var(--bb-shadow); }
+.bb-btn:hover { background: var(--bb-wood-mid); transform: translateY(-1px); }
+.bb-btn-add { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid var(--bb-gold-dim); border-radius: 4px; background: var(--bb-wood); color: var(--bb-gold); cursor: pointer; }
+.bb-btn-remove { background: none; border: none; color: var(--bb-text-dim); cursor: pointer; padding: 0.2rem; font-size: 0.75rem; opacity: 0.5; }
 .bb-btn-remove:hover { color: var(--bb-red); opacity: 1; }
-
-.bb-btn-start {
-  align-self: center;
-  margin-top: 0.3rem;
-  padding: 0.5rem 1.5rem;
-  background: linear-gradient(180deg, #2d6b1e 0%, #1e4a14 100%);
-  border: 1px solid #3a8a28;
-  color: #fff;
-  font-size: 0.95rem;
-}
-.bb-btn-start:hover {
-  background: linear-gradient(180deg, #38801e 0%, #275c18 100%);
-}
-
-.bb-btn-roll {
-  padding: 0.5rem 1.4rem;
-  background: linear-gradient(180deg, #2d6b1e 0%, #1e4a14 100%);
-  border: 1px solid #3a8a28;
-  color: #fff; font-size: 1rem;
-}
+.bb-btn-start { align-self: center; padding: 0.45rem 1.3rem; background: linear-gradient(180deg, #2d6b1e 0%, #1e4a14 100%); border: 1px solid #3a8a28; color: #fff; font-size: 0.9rem; }
+.bb-btn-roll { padding: 0.4rem 1.2rem; background: linear-gradient(180deg, #2d6b1e 0%, #1e4a14 100%); border: 1px solid #3a8a28; color: #fff; font-size: 0.95rem; }
 .bb-btn-roll:hover { background: linear-gradient(180deg, #38801e 0%, #275c18 100%); }
-
-.bb-btn-stand {
-  padding: 0.5rem 1.4rem;
-  background: linear-gradient(180deg, #2c5d8f 0%, #1e3f66 100%);
-  border: 1px solid #3a7bbf;
-  color: #fff; font-size: 1rem;
-}
+.bb-btn-stand { padding: 0.4rem 1.2rem; background: linear-gradient(180deg, #2c5d8f 0%, #1e3f66 100%); border: 1px solid #3a7bbf; color: #fff; font-size: 0.95rem; }
 .bb-btn-stand:hover { background: linear-gradient(180deg, #3670a8 0%, #28507a 100%); }
-
-.bb-btn-again {
-  background: linear-gradient(180deg, #2d6b1e 0%, #1e4a14 100%);
-  border: 1px solid #3a8a28; color: #fff;
-}
-
-.bb-btn-end {
-  background: var(--bb-wood);
-  border: 1px solid rgba(255,255,255,0.1);
-}
-
-.bb-btn-forfeit {
-  padding: 0.4rem 0.8rem;
-  background: linear-gradient(180deg, #6b1e1e 0%, #4a1414 100%);
-  border: 1px solid #8a2828;
-  color: #fcc;
-  font-size: 0.8rem;
-}
-.bb-btn-forfeit:hover {
-  background: linear-gradient(180deg, #822828 0%, #5c1a1a 100%);
-}
+.bb-btn-again { background: linear-gradient(180deg, #2d6b1e 0%, #1e4a14 100%); border: 1px solid #3a8a28; color: #fff; }
+.bb-btn-end { background: var(--bb-wood); border: 1px solid rgba(255,255,255,0.1); }
+.bb-btn-forfeit { padding: 0.35rem 0.7rem; background: linear-gradient(180deg, #6b1e1e 0%, #4a1414 100%); border: 1px solid #8a2828; color: #fcc; font-size: 0.75rem; }
+.bb-btn-forfeit:hover { background: linear-gradient(180deg, #822828 0%, #5c1a1a 100%); }
+.bb-btn-cheat { padding: 0.4rem 0.6rem; background: linear-gradient(180deg, #5c3d6e 0%, #3d2748 100%); border: 1px solid #7a5090; color: #dcc8f0; font-size: 0.95rem; }
+.bb-btn-cancel { font-size: 0.7rem; padding: 0.2rem 0.5rem; opacity: 0.7; }
 
 /* =============================================
-   Game Table
+   ROUND TABLE
    ============================================= */
 
-.bb-table {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding: 0.5rem 0.8rem;
+.bb-table { display: flex; flex-direction: column; gap: 0.4rem; padding: 0 0.5rem 0.5rem; flex: 1; }
+
+.bb-round-table {
+  position: relative;
+  width: 100%;
+  min-height: 340px;
   flex: 1;
 }
 
-.bb-players {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: center;
+.bb-table-surface {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 38%; height: 0;
+  padding-bottom: 38%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 40% 35%, #6b4a28 0%, #4a3018 40%, #2e1c0e 100%);
+  border: 4px solid var(--bb-gold-dim);
+  box-shadow: inset 0 0 25px rgba(0,0,0,0.6), 0 4px 16px rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
 }
 
+.bb-table-pot {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--bb-gold);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* Coin pile */
+.bb-coin-pile {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70%; height: 70%;
+}
+
+.bb-coin {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f0d060, #d4a017, #8b6914);
+  border: 1px solid #a07a10;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.5), inset 0 0.5px 0 rgba(255,255,200,0.5);
+  top: 50%; left: 50%;
+}
+
+.bb-coin:nth-child(1)  { transform: translate(-2px, -3px); }
+.bb-coin:nth-child(2)  { transform: translate(6px, 2px); }
+.bb-coin:nth-child(3)  { transform: translate(-7px, 5px); }
+.bb-coin:nth-child(4)  { transform: translate(3px, -7px); }
+.bb-coin:nth-child(5)  { transform: translate(-4px, 8px); }
+.bb-coin:nth-child(6)  { transform: translate(8px, -4px); }
+.bb-coin:nth-child(7)  { transform: translate(-9px, -1px); }
+.bb-coin:nth-child(8)  { transform: translate(1px, 6px); }
+.bb-coin:nth-child(9)  { transform: translate(5px, -9px); }
+.bb-coin:nth-child(10) { transform: translate(-6px, -6px); }
+.bb-coin:nth-child(11) { transform: translate(9px, 4px); }
+.bb-coin:nth-child(12) { transform: translate(-1px, 9px); }
+
+/* Player cards positioned around the table */
 .bb-card {
-  background: rgba(0,0,0,0.25);
-  border: 2px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  padding: 0.5rem;
-  width: 145px;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.4);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 0.35rem;
+  width: 120px;
   text-align: center;
   transition: all 0.25s ease;
+  z-index: 1;
 }
 
-.bb-active {
-  border-color: var(--bb-gold);
-  box-shadow: 0 0 12px var(--bb-gold-glow), inset 0 0 20px rgba(212,160,23,0.05);
-}
+.bb-active { border-color: var(--bb-gold); box-shadow: 0 0 12px var(--bb-gold-glow); z-index: 2; }
+.bb-bust { opacity: 0.4; border-color: var(--bb-red); box-shadow: 0 0 8px var(--bb-red-glow); }
+.bb-standing { border-color: var(--bb-blue); box-shadow: 0 0 8px var(--bb-blue-glow); }
+.bb-winner { border-color: var(--bb-gold); box-shadow: 0 0 18px var(--bb-gold-glow); opacity: 1; z-index: 2; }
 
-.bb-bust {
-  opacity: 0.45;
-  border-color: var(--bb-red);
-  box-shadow: 0 0 8px var(--bb-red-glow);
-}
-
-.bb-standing {
-  border-color: var(--bb-blue);
-  box-shadow: 0 0 8px var(--bb-blue-glow);
-}
-
-.bb-winner {
-  border-color: var(--bb-gold);
-  box-shadow: 0 0 18px var(--bb-gold-glow), 0 0 40px rgba(212,160,23,0.15);
-  opacity: 1;
-}
-
-.bb-card-top {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-bottom: 0.4rem;
-}
-
-.bb-card-name {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-align: left;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--bb-ivory);
-}
-
+.bb-card-top { display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.25rem; }
+.bb-card-name { font-size: 0.7rem; font-weight: 700; flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bb-ivory); }
 .bb-active .bb-card-name { color: var(--bb-gold); }
 
-.bb-score {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--bb-ivory);
-  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
-  margin-top: 0.2rem;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
+.bb-card-tags { display: flex; gap: 0.2rem; justify-content: center; margin-bottom: 0.2rem; min-height: 0.9rem; }
 
+.bb-score { font-size: 1.3rem; font-weight: 800; color: var(--bb-ivory); text-shadow: 0 1px 3px rgba(0,0,0,0.5); line-height: 1; font-variant-numeric: tabular-nums; }
 .bb-active .bb-score { color: var(--bb-gold); }
 .bb-bust .bb-score { color: #cc6666; text-decoration: line-through; }
 .bb-winner .bb-score { color: var(--bb-gold); }
 
-/* =============================================
-   CSS Dice Faces
-   ============================================= */
+/* ── Dice ── */
+.bb-dice-tray { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; min-height: 24px; padding: 0.15rem 0; }
+.bb-die { width: 22px; height: 22px; background: var(--bb-die-bg); border: 1px solid var(--bb-die-border); border-radius: 3px; position: relative; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 1px 2px rgba(0,0,0,0.4); }
+.bb-die .bb-pips { position: absolute; inset: 2px; }
+.bb-die-1 .bb-pips { background: radial-gradient(circle, var(--bb-die-pip) 3px, transparent 3px); background-size: 100% 100%; background-position: center; }
+.bb-die-2 .bb-pips { background: radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat top right, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat bottom left; background-size: 50% 50%; }
+.bb-die-3 .bb-pips { background: radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat top right, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat center, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat bottom left; background-size: 50% 50%; }
+.bb-die-4 .bb-pips { background: radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat top left, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat top right, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat bottom left, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat bottom right; background-size: 50% 50%; }
+.bb-die-5 .bb-pips { background: radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat top left, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat top right, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat center, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat bottom left, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat bottom right; background-size: 50% 50%; }
+.bb-die-6 .bb-pips { background: radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat top left, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat top right, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat center left, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat center right, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat bottom left, radial-gradient(circle, var(--bb-die-pip) 2px, transparent 2px) no-repeat bottom right; background-size: 50% 50%; }
 
-.bb-dice-tray {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  justify-content: center;
-  min-height: 30px;
-  padding: 0.25rem 0;
-}
+/* Cheat die buttons (larger) */
+.bb-die-btn { cursor: pointer; transition: transform 0.15s; border: none; background: var(--bb-die-bg); border-radius: 4px; width: 34px; height: 34px; position: relative; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 1px 3px rgba(0,0,0,0.4); }
+.bb-die-btn .bb-pips { position: absolute; inset: 4px; }
+.bb-die-btn:hover { transform: translateY(-2px) scale(1.1); box-shadow: 0 0 10px rgba(92, 61, 110, 0.6); }
 
-.bb-die {
-  width: 28px; height: 28px;
-  background: var(--bb-die-bg);
-  border: 1.5px solid var(--bb-die-border);
-  border-radius: 4px;
-  position: relative;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 1px 2px rgba(0,0,0,0.4);
-}
-
-.bb-die .bb-pips {
-  position: absolute;
-  inset: 3px;
-}
-
-.bb-die-1 .bb-pips {
-  background: radial-gradient(circle, var(--bb-die-pip) 3.5px, transparent 3.5px);
-  background-size: 100% 100%;
-  background-position: center center;
-}
-
-.bb-die-2 .bb-pips {
-  background:
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top right,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom left;
-  background-size: 50% 50%;
-}
-
-.bb-die-3 .bb-pips {
-  background:
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top right,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat center center,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom left;
-  background-size: 50% 50%;
-}
-
-.bb-die-4 .bb-pips {
-  background:
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top left,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top right,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom left,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom right;
-  background-size: 50% 50%;
-}
-
-.bb-die-5 .bb-pips {
-  background:
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top left,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top right,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat center center,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom left,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom right;
-  background-size: 50% 50%;
-}
-
-.bb-die-6 .bb-pips {
-  background:
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top left,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat top right,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat center left,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat center right,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom left,
-    radial-gradient(circle, var(--bb-die-pip) 2.5px, transparent 2.5px) no-repeat bottom right;
-  background-size: 50% 50%;
-}
-
-/* =============================================
-   Action Bar
-   ============================================= */
-
-.bb-action-bar, .bb-result-bar {
-  text-align: center;
-  padding: 0.6rem;
-  background: rgba(0,0,0,0.2);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 8px;
-}
-
-.bb-turn-prompt {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--bb-gold);
-  margin-bottom: 0.5rem;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
-}
-
-.bb-action-buttons {
-  display: flex;
-  gap: 0.6rem;
-  justify-content: center;
-  align-items: center;
-}
-
+/* ── Action / Result Bars ── */
+.bb-action-bar, .bb-result-bar { text-align: center; padding: 0.5rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; }
+.bb-turn-prompt { font-size: 0.85rem; font-weight: 700; color: var(--bb-gold); margin-bottom: 0.4rem; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+.bb-action-buttons { display: flex; gap: 0.5rem; justify-content: center; align-items: center; flex-wrap: wrap; }
 .bb-npc-thinking { font-style: italic; color: var(--bb-ivory-dim); }
+.bb-spin { display: inline-block; animation: bb-wobble 0.8s ease-in-out infinite; }
+@keyframes bb-wobble { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(18deg); } 75% { transform: rotate(-18deg); } }
 
-.bb-spin {
-  display: inline-block;
-  animation: bb-wobble 0.8s ease-in-out infinite;
-}
-
-@keyframes bb-wobble {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(18deg); }
-  75% { transform: rotate(-18deg); }
-}
-
-.bb-result-msg {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--bb-gold);
-  margin-bottom: 0.6rem;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
-}
-
+/* Winner spotlight */
+.bb-winner-spotlight { margin-bottom: 0.5rem; }
+.bb-winner-portrait { width: 56px; height: 56px; border-radius: 50%; border: 3px solid var(--bb-gold); box-shadow: 0 0 20px var(--bb-gold-glow); object-fit: cover; }
+.bb-result-msg { font-size: 1rem; font-weight: 700; color: var(--bb-gold); margin-bottom: 0.5rem; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
 .bb-result-msg i { margin-right: 0.3rem; }
 
-/* =============================================
-   Round Log
-   ============================================= */
+/* Cheat picker */
+.bb-cheat-picker { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+.bb-cheat-label { font-size: 0.8rem; color: #dcc8f0; font-weight: 600; font-style: italic; }
+.bb-cheat-dice { display: flex; gap: 5px; justify-content: center; }
 
-.bb-log {
-  background: rgba(0,0,0,0.25);
-  border: 1px solid rgba(255,255,255,0.04);
-  border-radius: 6px;
-  padding: 0.4rem 0.6rem;
-  max-height: 110px;
-  overflow-y: auto;
-  font-size: 0.75rem;
-  color: var(--bb-text-dim);
-  line-height: 1.35;
-}
-
-.bb-log-line { padding: 0.12rem 0; }
+/* ── Log ── */
+.bb-log { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.04); border-radius: 6px; padding: 0.3rem 0.5rem; max-height: 90px; overflow-y: auto; font-size: 0.7rem; color: var(--bb-text-dim); line-height: 1.3; }
+.bb-log-line { padding: 0.1rem 0; }
 .bb-log-line + .bb-log-line { border-top: 1px solid rgba(255,255,255,0.03); }
-
 .bb-log::-webkit-scrollbar { width: 4px; }
 .bb-log::-webkit-scrollbar-track { background: transparent; }
 .bb-log::-webkit-scrollbar-thumb { background: var(--bb-gold-dim); border-radius: 2px; }
 
-/* =============================================
-   Chat message
-   ============================================= */
-
-.baldurs-bones-chat {
-  padding: 0.5rem 0.6rem;
-  background: linear-gradient(135deg, var(--color-cool-5, #1a3a20) 0%, var(--color-cool-4, #224a2a) 100%);
-  border-radius: 6px;
-  color: #e8e0d0;
-  border-left: 3px solid #d4a017;
-  font-size: 0.9rem;
-}
-
-/* =============================================
-   Host Tag
-   ============================================= */
-
-.bb-tag-host {
-  background: var(--bb-gold-dim);
-  color: #fff;
-}
-
-/* =============================================
-   Cheat (Sleight of Hand) UI
-   ============================================= */
-
-.bb-btn-cheat {
-  padding: 0.5rem 0.7rem;
-  background: linear-gradient(180deg, #5c3d6e 0%, #3d2748 100%);
-  border: 1px solid #7a5090;
-  color: #dcc8f0;
-  font-size: 1rem;
-}
-.bb-btn-cheat:hover {
-  background: linear-gradient(180deg, #6e4d82 0%, #4a305a 100%);
-}
-
-.bb-cheat-picker {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.bb-cheat-label {
-  font-size: 0.85rem;
-  color: #dcc8f0;
-  font-weight: 600;
-  font-style: italic;
-}
-
-.bb-cheat-dice {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-}
-
-.bb-die-btn {
-  cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
-  border: none;
-  background: var(--bb-die-bg);
-  border-radius: 4px;
-  width: 36px;
-  height: 36px;
-  position: relative;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 1px 3px rgba(0,0,0,0.4);
-}
-
-.bb-die-btn .bb-pips {
-  position: absolute;
-  inset: 4px;
-}
-
-.bb-die-btn:hover {
-  transform: translateY(-2px) scale(1.1);
-  box-shadow: 0 0 10px rgba(92, 61, 110, 0.6), 0 2px 6px rgba(0,0,0,0.4);
-}
-
-.bb-btn-cancel {
-  font-size: 0.75rem;
-  padding: 0.2rem 0.6rem;
-  opacity: 0.7;
-}
+/* ── Chat ── */
+.baldurs-bones-chat { padding: 0.4rem 0.5rem; background: linear-gradient(135deg, #1a3a20 0%, #224a2a 100%); border-radius: 6px; color: #e8e0d0; border-left: 3px solid #d4a017; font-size: 0.85rem; }
