@@ -136,9 +136,9 @@
     {{!-- ── RESOLUTION ── --}}
     {{#if isResolution}}
     <div class="bb-result-bar">
-      {{#if winnerImg}}
+      {{#if winnerInfos.length}}
       <div class="bb-winner-spotlight">
-        <img src="{{winnerImg}}" alt="{{winnerName}}" class="bb-winner-portrait" />
+        {{#each winnerInfos}}<img src="{{this.img}}" alt="{{this.name}}" class="bb-winner-portrait" />{{/each}}
       </div>
       {{/if}}
       {{#if (bbeq winnerId 'tie')}}<div class="bb-result-msg"><i class="fas fa-handshake"></i> Push — pot split!</div>

@@ -87,6 +87,7 @@ export class GameManager {
       originalOrder: null,
       hostActorId: null,
       winnerId: null,
+      winnerActorIds: [],
       roundLog: []
     };
     this.openApp();
@@ -452,29 +453,39 @@ export class GameManager {
   #npcDecide(player) {
     const total = player.total;
 
-    // Rule: always roll at 16 or below
+    // Perfect score — always stand
+    if (total === 21) return PLAYER_ACTION.STAND;
+
+    // Always roll at 16 or below
     if (total <= 16) return PLAYER_ACTION.ROLL;
 
-    // Rule: always stand at 20 or 21
-    if (total >= 20) return PLAYER_ACTION.STAND;
-
-    // Rule: never stand below the highest standing score — it's an auto-loss
-    const bestStanding = this.#getHighestStandingTotal();
-    if (bestStanding > 0 && total < bestStanding) return PLAYER_ACTION.ROLL;
-
-    // INT-based decision for 17–19
+    // Get INT info
     const actor = game.actors.get(player.actorId);
     const intScore = actor?.system?.abilities?.int?.value ?? 10;
-    // Smart factor: 0.0 (INT 1) → 1.0 (INT 20)
     const smart = Math.max(0, Math.min(1, (intScore - 1) / 19));
 
+    // Check if someone already stands higher
+    const bestStanding = this.#getHighestStandingTotal();
+    if (bestStanding > 0 && total < bestStanding) {
+      // Standing here is an auto-loss. Smart NPCs always keep rolling.
+      // Dumb NPCs might not realize and stand anyway.
+      // INT 1 (smart=0): 15% chance to foolishly stand
+      // INT 10 (smart=0.47): ~3% chance
+      // INT 14+ (smart≥0.68): effectively 0%
+      const foolishStandChance = Math.max(0, 0.15 * (1 - smart * 1.4));
+      if (Math.random() >= foolishStandChance) return PLAYER_ACTION.ROLL;
+      // else: the fool stands and loses
+      return PLAYER_ACTION.STAND;
+    }
+
+    // At 20 with no one standing higher: very high chance to stand
+    if (total === 20) return Math.random() < 0.95 ? PLAYER_ACTION.STAND : PLAYER_ACTION.ROLL;
+
+    // INT-based decision for 17–19
     // Bust probability: 17→33%, 18→50%, 19→67%
     const bustChance = Math.max(0, Math.min(1, (total - 15) / 6));
 
-    // Stand chance scales with bust risk, amplified by intelligence.
-    // Smart NPCs overweight bust risk (stand more). Dumb NPCs underweight it.
-    // At smart=1.0: standChance ≈ bustChance^0.3 (very responsive)
-    // At smart=0.0: standChance ≈ bustChance^1.0 (tracks raw probability)
+    // Smart NPCs overweight bust risk. Dumb NPCs underweight it.
     const exponent = 1.0 - (smart * 0.7);
     let standChance = Math.pow(bustChance, exponent);
 
@@ -524,6 +535,7 @@ export class GameManager {
 
     if (eligible.length === 0) {
       this.#state.winnerId = null;
+      this.#state.winnerActorIds = [];
       this.#state.roundLog.push('Everyone busted! The pot is lost to the house.');
       this.#postChatResult(`Everyone busted! The pot of ${this.#state.pot} gp is lost to the house.`);
       return;
@@ -534,8 +546,8 @@ export class GameManager {
     const winners = eligible.filter(p => p.total === highScore);
 
     // ── SET ALL STATE SYNCHRONOUSLY before any awaits ──
-    // This prevents the race condition where #broadcastState fires
-    // before the async currency updates finish.
+    // Track all winner IDs so the UI can highlight them on ties too.
+    this.#state.winnerActorIds = winners.map(w => w.actorId);
 
     if (winners.length === 1) {
       const winner = winners[0];
@@ -589,6 +601,7 @@ export class GameManager {
     this.#state.pot = 0;
     this.#state.currentPlayerIndex = 0;
     this.#state.winnerId = null;
+    this.#state.winnerActorIds = [];
     this.#state.roundLog = [];
     this.#broadcastState(); this.#renderApp();
   }

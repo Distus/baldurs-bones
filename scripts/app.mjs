@@ -36,12 +36,16 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
         .sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    // Winner info for resolution
-    let winnerName = null, winnerImg = null;
-    if (state.phase === PHASE.RESOLUTION && state.winnerId && state.winnerId !== 'tie') {
-      const wp = state.players.find(p => p.actorId === state.winnerId);
-      if (wp) { winnerName = wp.name; winnerImg = wp.img; }
+    // Winner info for resolution (single winner AND ties)
+    const winnerActorIds = state.winnerActorIds ?? [];
+    let winnerInfos = [];
+    if (state.phase === PHASE.RESOLUTION && winnerActorIds.length > 0) {
+      winnerInfos = winnerActorIds.map(id => {
+        const wp = state.players.find(p => p.actorId === id);
+        return wp ? { name: wp.name, img: wp.img } : null;
+      }).filter(Boolean);
     }
+    const winnerName = winnerInfos.length === 1 ? winnerInfos[0].name : null;
 
     // Coin pile: one coin per player who anted, up to 10 visual coins
     const showCoins = state.phase !== PHASE.SETUP && state.pot > 0;
@@ -65,7 +69,7 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
                      state.players[state.currentPlayerIndex]?.actorId === p.actorId,
           isBust: p.status === STATUS.BUST,
           isStanding: p.status === STATUS.STANDING,
-          isWinner: state.winnerId === p.actorId,
+          isWinner: winnerActorIds.includes(p.actorId),
           isHost: p.actorId === state.hostActorId,
           hasRolled: p.dice.length > 0,
           diceValues: p.dice,
@@ -81,7 +85,7 @@ export class BaldursBonesApp extends HandlebarsApplicationMixin(ApplicationV2) {
       availableActors,
       roundLog: state.roundLog ?? [],
       winnerId: state.winnerId,
-      winnerName, winnerImg,
+      winnerName, winnerInfos,
       coins
     };
   }
